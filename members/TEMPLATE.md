@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | GitHub | [username](https://github.com/username) |
-| LinkedIn | (optional) |
+| LinkedIn | (optional: full URL, https://www.linkedin.com/in/your-handle) |
 | Degree | |
 | Semesters on the team | YYYY-S to YYYY-S |
 | Area | Firmware · Electronics · Mechanical · ADC · Ops |

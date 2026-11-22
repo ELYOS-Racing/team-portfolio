@@ -33,11 +33,11 @@ It is plain SVG updated with `transform` and `stroke-dashoffset` (no WebGL, no l
 
 ### Desk and sheets
 
-The whole site is cream: the page is the drafting desk (header, hero, headline numbers, the 3D car, footer) and the content lies on it as drawing sheets a shade lighter (`sheet()` in `build.py`): cream graph paper, blue-pen ink, a drafting frame with zone marks (A–F, 1–4), an outlined sheet number, a dimension line that draws itself under the head, an optional handwritten margin note, highlighter on bold text and a CAD title block (drawing number `ELY-<code>-<nn>`, title, season, scale, sheet) at the foot. Type roles: Archivo for headings and text, JetBrains Mono for labels and data, Caveat only for handwritten notes. Ink on paper keeps at least 5.9:1 contrast.
+The page is a soft blueprint desk (mid blue with a faint white grid) between deep-navy header and footer bands that carry the official white logo; the hero, the headline numbers and the 3D car sit on the desk, and the content lies on it as drawing sheets (`sheet()` in `build.py`): cream graph paper, blue-pen ink, a drafting frame with zone marks (A–F, 1–4), an outlined sheet number, a dimension line that draws itself under the head, an optional handwritten margin note, highlighter on bold text and a CAD title block (drawing number `ELY-<code>-<nn>`, title, season, scale, sheet) at the foot. Type roles: Archivo for headings and text, JetBrains Mono for labels and data, Caveat only for handwritten notes. Ink on paper keeps at least 5.9:1 contrast.
 
 ### Member pages: the engineer's data sheet
 
-Each `members/<user>.md` becomes a data sheet: a hand-drawn monogram (first letters of the first two names, or the optional `Initials` field) and identity block (role from the latest season heading, area, seasons, links), then **Measured results** (optional table: Metric · Before · After · Unit; a row becomes before/after bars with the improvement written by hand, or one big number if Before is empty), **Revision history** (each `## Season YYYY · role` is a revision, REV A, B…), **Bill of skills** (the Skills paragraph as a numbered parts list) and **Worked on** (engineering pages matched from the Area field). The template explains the table.
+Each `members/<user>.md` becomes a data sheet: a hand-drawn monogram (first letters of the first two names, or the optional `Initials` field) and identity block (role from the latest season heading, area, seasons, and GitHub and LinkedIn links with icons, also shown on the crew cards), then **Measured results** (optional table: Metric · Before · After · Unit; a row becomes before/after bars with the improvement written by hand, or one big number if Before is empty), **Revision history** (each `## Season YYYY · role` is a revision, REV A, B…), **Bill of skills** (the Skills paragraph as a numbered parts list) and **Worked on** (engineering pages matched from the Area field). The template explains the table.
 
 ### Engineering pages and their diagrams
 
@@ -53,11 +53,12 @@ From 1560 px a chapter rail sits in the left margin of the home and competition 
 
 | Token | Hex | Use |
 |---|---|---|
-| Navy | `#0F3854` | From the logo: the letters of `logo-on-light.png` |
-| Ink | `#17325C` | Text and drawing lines on the cream paper |
+| Navy | `#0F3854` | From the logo |
+| Deep navy | `#08202F` | Header and footer bands (official logo in white) |
 | Silver | `#E4E4E4` | From the logo: rules (at low opacity) and text accents |
-| Desk / sheet | `#EFE9DA` / `#F8F4EA` | Page background and drawing sheets (one cream theme everywhere) |
-| Blue pen | `#1F4FBF` | Data and actions on paper: course outlines, bars, readouts, diagram highlights, links and buttons; the logo's arm keeps signal blue `#5E97FF` |
+| Blueprint desk | `#24476B` | Page background with a faint white grid |
+| Sheet / ink | `#F8F4EA` / `#17325C` | Drawing sheets and the blue-black pen on them |
+| Blue pen / signal | `#1F4FBF` / `#9CC0FF` | Data and actions: the pen on the sheets, the light signal blue on the desk (courses, readouts, buttons) |
 | Checkered | black and white | Only at the start/finish line |
 
 ## Accessibility

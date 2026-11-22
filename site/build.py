@@ -70,8 +70,8 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <meta property="og:image" content="{BASE_URL}assets/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#efe9da">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#08202f">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="{up}assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,7 +85,7 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <a class="skip" href="#content">Skip to content</a>
 <header class="bar">
 <div class="bar-in">
-<a class="brand" href="{up or "./"}"><img src="{up}assets/logo-on-light.png" alt="Elyos Racing Team, home" width="132" height="44"></a>
+<a class="brand" href="{up or "./"}"><img src="{up}assets/logo-on-dark.png" alt="Elyos Racing Team, home" width="132" height="44"></a>
 <nav aria-label="Main">{nav("projects/", "Engineering", "engineering")}{nav("mileage", "Mileage", "mileage")}{nav("adc", "Autonomous", "adc")}{nav("members/", "Team", "members")}</nav>
 </div>
 </header>
@@ -95,7 +95,7 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 </main>
 <footer>
 <div class="foot-in">
-<img src="{up}assets/logo-on-light.png" alt="" width="108" height="36" loading="lazy">
+<img src="{up}assets/logo-on-dark.png" alt="" width="108" height="36" loading="lazy">
 <p>Content © 2026 Luis Xavier García Pimentel Ascencio and Elyos Racing Team, <a href="{REPO}/blob/main/LICENSE.md">PolyForm Strict 1.0.0</a>. Member pages belong to each member. <a href="{REPO}">Source on GitHub</a>.</p>
 </div>
 </footer>
@@ -274,14 +274,47 @@ def initials(name: str, override: str = "") -> str:
     return "".join(p[0] for p in parts[:2]).upper() if parts else "?"
 
 
+ICON_GH = ('<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 '
+           '2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52'
+           '-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08'
+           '-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51'
+           '.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0'
+           '-4.42-3.58-8-8-8Z"/></svg>')
+ICON_IN = ('<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M0 1.15C0 .52.52 0 1.18 0h13.64C15.48 '
+           '0 16 .52 16 1.15v13.7c0 .63-.52 1.15-1.18 1.15H1.18C.52 16 0 15.48 0 14.85V1.15Zm4.94 12.24V6.17H2.54v7.22h2.4ZM3.74 5.18c.84 0 '
+           '1.36-.55 1.36-1.25-.02-.71-.52-1.25-1.34-1.25-.82 0-1.36.54-1.36 1.25 0 .7.52 1.25 1.33 1.25h.01Zm4.91 8.21V9.36c0-.22.02-.43.08'
+           '-.59.18-.43.57-.88 1.23-.88.87 0 1.21.66 1.21 1.63v3.87h2.4V9.25c0-2.22-1.18-3.25-2.76-3.25-1.27 0-1.85.7-2.16 1.19v.03h-.02l.02'
+           '-.03V6.17h-2.4c.03.68 0 7.22 0 7.22h2.4Z"/></svg>')
+
+
+def social(f: dict) -> dict:
+    """GitHub and LinkedIn from a member's field table: a Markdown link or a bare URL; placeholders are ignored."""
+    out = {}
+    gh = re.search(r"https://github\.com/([A-Za-z0-9-]+)", f.get("GitHub", ""))
+    if gh and gh.group(1) != "username":
+        out["github"] = (f"https://github.com/{gh.group(1)}", gh.group(1))
+    li = re.search(r"https?://(?:[a-z]{2,3}\.)?linkedin\.com/in/([A-Za-z0-9_%-]+)/?", f.get("LinkedIn", ""))
+    if li and li.group(1) != "your-handle":  # the template's example
+        out["linkedin"] = (f"https://www.linkedin.com/in/{li.group(1)}/", f"in/{li.group(1)}")
+    return out
+
+
+def social_link(kind: str, url: str, handle: str) -> str:
+    return f'<a class="soc" href="{esc(url)}" rel="me noopener">{ICON_GH if kind == "github" else ICON_IN}<span>{esc(handle)}</span></a>'
+
+
 def members_list(members: list[dict], up: str = "") -> str:
     """Crew sheet: one small title block per member, plus the invitation to publish."""
     cards = []
     for m in members:
         tag = f'<span class="tag">{esc(m["seasons"])}</span>' if m.get("seasons") else ""
+        soc = m.get("social", {})
+        icons = "".join(f'<a class="soc-ico" href="{esc(u)}" rel="me noopener" aria-label="{esc(m["name"])} on {"GitHub" if k == "github" else "LinkedIn"}">'
+                        f'{ICON_GH if k == "github" else ICON_IN}</a>' for k, (u, _) in soc.items())
+        icons = f'<span class="soc-row">{icons}</span>' if icons else ""
         cards.append(f'<li class="member" data-reveal>{monogram(m["name"], "sm", m.get("initials", ""))}'
                      f'<span class="who"><a class="stretch" href="{up}members/{m["slug"]}">{esc(m["name"])}</a>'
-                     f'<span class="area">{esc(m["area"])}</span>{tag}</span>'
+                     f'<span class="area">{esc(m["area"])}</span>{tag}{icons}</span>'
                      f'<span class="dwg" aria-hidden="true">{esc(m.get("dwg", ""))}</span></li>')
     join = (f'<li class="member member--join" data-reveal><span class="mono mono--sm mono--empty" aria-hidden="true">+</span>'
             f'<span class="who"><a class="stretch" href="{REPO}/blob/main/members/TEMPLATE.md">Your page here</a>'
@@ -505,7 +538,7 @@ def split_skills(text: str) -> list[str]:
 def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
     title, f, rest = split_page(text)
     intro, sections = split_sections(rest)
-    gh = re.search(r"\[([^\]]+)\]\((https://github\.com/[^)]+)\)", f.get("GitHub", ""))
+    soc = social(f)
     seasons_txt = f.get("Seasons on the team") or f.get("Semesters on the team", "")
     area = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", f.get("Area", ""))
     revs = sorted(((int(m.group(1)), m.group(2).strip(), body) for h, body in sections
@@ -518,8 +551,7 @@ def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
 
     ident = [("Role", esc(role[:1].upper() + role[1:]) if role else ""), ("Area", esc(area)),
              ("Seasons", inline_md(seasons_txt) if seasons_txt else ""),
-             ("GitHub", f'<a href="{gh.group(2)}">{esc(gh.group(1))}</a>' if gh else ""),
-             ("LinkedIn", inline_md(f["LinkedIn"]) if f.get("LinkedIn") and "optional" not in f["LinkedIn"] else ""),
+             ("Links", "".join(social_link(k, *v) for k, v in soc.items())),
              ("Degree", inline_md(f["Degree"]) if f.get("Degree") else "")]
     ident_html = "".join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in ident if v)
 
@@ -560,7 +592,7 @@ def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
 <span><i>Rev</i>{letters[len(revs) - 1] if revs else "A"}</span><span><i>Season</i>{revs[-1][0] if revs else SEASON}</span><span><i>Sheet</i>01</span>
 </footer>
 </article></div>"""
-    info = {"slug": slug, "name": title, "area": area, "dwg": dwg, "initials": f.get("Initials", ""),
+    info = {"slug": slug, "name": title, "area": area, "dwg": dwg, "initials": f.get("Initials", ""), "social": soc,
             "seasons": re.sub(r"\s*\(.*?\)", "", re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", seasons_txt)).strip()}
     return page(title, body, 1, f"{title}, {area}, Elyos Racing Team", current="members"), info
 

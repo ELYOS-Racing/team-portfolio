@@ -3,6 +3,7 @@
 | Field | Value |
 |---|---|
 | GitHub | [luisxavierxd](https://github.com/luisxavierxd) |
+| LinkedIn | [luisxaviergpa](https://www.linkedin.com/in/luisxaviergpa/) |
 | Seasons on the team | 2026–2027 (joined in August 2026) |
 | Area | Motor control, telemetry, Autonomous Driving Challenge |
 
