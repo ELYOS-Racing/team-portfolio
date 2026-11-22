@@ -6,7 +6,7 @@ Student team from **Tecnológico de Monterrey, Guadalajara campus**, designing a
 
 | Season | Event | Result |
 |---|---|---|
-| [2026](seasons/2026.md) | Shell Eco-marathon United States, Indianapolis | **6th place**, Prototype Battery Electric · ~310 km/kWh |
+| [2026](seasons/2026.md) | Shell Eco-marathon United States, Indianapolis | **6th place**, Prototype Battery Electric · 336 km/kWh |
 | [2025](seasons/2025.md) | Shell Eco-marathon Americas | **4th place** |
 | [2024](seasons/2024.md) | Shell Eco-marathon Americas, Indianapolis | **4th place in the Americas** · lightest car of the competition (30 kg) |
 | [2023](seasons/2023.md) | Shell Eco-marathon Brazil, Rio de Janeiro | **6th place** · 235 km/kWh, most efficient Mexican car in Shell Eco-marathon history |
