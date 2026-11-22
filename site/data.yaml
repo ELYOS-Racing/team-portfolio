@@ -10,6 +10,24 @@ hero:
   lap_km: 3.8325   # official: 15.33 km in 4 laps (Chapter II US 2026, art. 226)
   event: Shell Eco-marathon United States 2026
 
+# Headline numbers under the hero (each one is stated in a season or project page)
+stats:
+  - [336, "km/kWh", "Best result, Shell Eco-marathon United States 2026"]
+  - [30, "kg", "Lightest car of the 2024 Americas competition"]
+  - [4, "th place", "In the Americas, in 2024 and again in 2025"]
+  - [12, "× faster", "Motor control loop after our rework: 68 µs down to 5.4 µs"]
+
+car:
+  title: Seen through the shell.
+  summary: >-
+    The prototype that raced at Indianapolis in 2026, from the team's own CAD, shown in x-ray so
+    the chassis, steering and wheels are visible. It is also the base of the autonomy kit.
+  facts:
+    - [Category, Prototype Battery Electric]
+    - [Motor control, "FOC on a Teensy 4.1, 48 V inverter"]
+    - [Raced, "Indianapolis, April 2026"]
+    - [Next, "Autonomy kit for ADC Poland 2027"]
+
 programs:
   mileage:
     name: Mileage Challenge
@@ -24,7 +42,7 @@ programs:
       - [Lap, "3,833 m, raced clockwise"]
       - [Score, km/kWh on Shell's joulemeter]
     facts_source: Shell Eco-marathon United States 2026, Official Rules, Chapter II
-    projects: [driver, telemetry]
+    projects: [mechanics, electronics, driver, telemetry, strategy]
   adc:
     name: Autonomous Driving Challenge
     track: silesia
@@ -42,41 +60,65 @@ programs:
 
 results:
   - year: 2026
+    circuit: Indianapolis Motor Speedway
     event: Shell Eco-marathon United States, Indianapolis
     result: 6th place, Prototype Battery Electric
     km_per_kwh: 336
     page: seasons/2026.md
   - year: 2025
+    circuit: Other venues
     event: Shell Eco-marathon Americas
     result: 4th place
     km_per_kwh: 293
     page: seasons/2025.md
   - year: 2024
+    circuit: Indianapolis Motor Speedway
     event: Shell Eco-marathon Americas, Indianapolis
     result: 4th place in the Americas, lightest car of the competition (30 kg)
     km_per_kwh: 302
     page: seasons/2024.md
   - year: 2023
+    circuit: Other venues
     event: Shell Eco-marathon Brazil, Rio de Janeiro
     result: 6th place, most efficient Mexican car in Shell Eco-marathon history
     km_per_kwh: 235
     page: seasons/2023.md
   - year: 2023
+    circuit: Indianapolis Motor Speedway
     event: Shell Eco-marathon Americas, Indianapolis
     result: Debut, 2nd lightest car in the Americas (31 kg)
     page: seasons/2023.md
 
+# Engineering areas, in the order they appear on the home page. `discipline` is the card label.
 projects:
+  mechanics:
+    name: Mechanics
+    discipline: Mechanical design
+    page: projects/mechanics.md
+    summary: A three-wheeled 30 kg car with partial-Ackermann steering, hydraulic brakes and, for 2027, a chain drive with a clutch.
+  electronics:
+    name: Electronics
+    discipline: Hardware
+    page: projects/electronics.md
+    summary: Our own 48 V motor-driver and telemetry boards in KiCad, with design-rule checks on every change.
   driver:
     name: Motor driver
+    discipline: Embedded control
     page: projects/driver.md
     summary: Field-oriented control of a BLDC motor on a 600 MHz microcontroller, tuned for the lowest possible loss.
   telemetry:
     name: Telemetry
+    discipline: Data and sensing
     page: projects/telemetry.md
     summary: Sensor fusion, logging and a live link to the pits; a predictive co-pilot is in development.
+  strategy:
+    name: Energy strategy
+    discipline: Simulation
+    page: projects/strategy.md
+    summary: A metre-by-metre model of the car and track that finds the cheapest way round and where every watt goes.
   adc:
     name: Autonomy stack
+    discipline: Robotics
     page: projects/adc.md
     summary: ROS 2 estimation, planning and actuation, software-in-the-loop simulation and energy-aware speed profiles.
 
