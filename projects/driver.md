@@ -1,18 +1,18 @@
-# Driver del motor
+# Motor driver
 
-Controlador del motor BLDC del prototipo: convierte el pedal en corriente y la corriente en par, con la menor pérdida posible.
+Controller for the prototype's BLDC motor: it turns the pedal into current and the current into torque, with as little loss as possible.
 
-| Aspecto | Detalle |
+| Aspect | Detail |
 |---|---|
-| Plataforma | Teensy 4.1 (NXP i.MX RT1062, ARM Cortex-M7 a 600 MHz) |
-| Software | Teensyduino + FreeRTOS + SimpleFOC, con una capa de abstracción de hardware propia |
-| Control | FOC (control vectorial) con sensores Hall; lazo de corriente a 10 kHz |
-| Potencia | Inversor trifásico de 48 V |
+| Platform | Teensy 4.1 (NXP i.MX RT1062, ARM Cortex-M7 at 600 MHz) |
+| Software | Teensyduino + FreeRTOS + SimpleFOC, with our own hardware abstraction layer |
+| Control | FOC (field-oriented control) with Hall sensors; 10 kHz current loop |
+| Power | 48 V three-phase inverter |
 
-## Lo que se trabaja para 2027
+## Work for 2027
 
-- Medición de corriente sincronizada con el PWM: el lazo pasó de ≈ 68 µs de cómputo y ≈ 27 µs de jitter a ≈ 5.4 µs y ≈ 0.6 µs (medido en banco, nov-2026).
-- Arranque sin sensores de posición y observador sensorless.
-- Motor de ≈ 750 W con clutch, operado en su punto de máxima eficiencia.
+- Current measurement synchronized with the PWM: the loop went from ≈ 68 µs of compute and ≈ 27 µs of jitter to ≈ 5.4 µs and ≈ 0.6 µs (bench measurement, Nov 2026).
+- Sensorless start-up and sensorless observer.
+- A ≈ 750 W motor with a clutch, run at its most efficient operating point.
 
-El código es privado.
+The code is private.

@@ -1,7 +1,7 @@
-# Integrantes
+# Members
 
-Una página por integrante, **solo si la persona la crea**: el PR propio es el consentimiento para publicarla. Plantilla: [`PLANTILLA.md`](PLANTILLA.md).
+One page per member, **only if that person creates it**: their own PR is their consent to publish it. Template: [`TEMPLATE.md`](TEMPLATE.md).
 
-| Integrante | Área | Temporadas |
+| Member | Area | Seasons |
 |---|---|---|
 | | | |
