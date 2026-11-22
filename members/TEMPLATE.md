@@ -13,7 +13,7 @@
 
 ## Measured results
 
-Optional. Each row becomes a figure on your page: a before/after bar with the improvement, or a single big number if you leave Before empty. Only numbers you measured or can point to.
+Optional. Each row becomes a figure on your page: a before/after bar with the improvement, a single big number if you leave Before empty, or a short milestone word (for example "Functional") with its caption. Only numbers you measured or can point to.
 
 | Metric | Before | After | Unit |
 |---|---|---|---|

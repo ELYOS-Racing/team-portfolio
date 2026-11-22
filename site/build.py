@@ -352,7 +352,7 @@ SEASON = "2027"
 
 
 def sheet(sid: str, no: int, dwg: str, kicker: str, title: str, body: str, note: str = "", lede: str = "",
-          h: str = "h2", wide: bool = False) -> str:
+          h: str = "h2", wide: bool = False, tabs: str = "") -> str:
     """A drawing sheet on graph paper: zone marks in the frame, a numbered head with a dimension line,
     an optional handwritten margin note, the content, and a CAD title block at the foot."""
     code = f"ELY-{dwg}-{no:02d}"
@@ -361,8 +361,8 @@ def sheet(sid: str, no: int, dwg: str, kicker: str, title: str, body: str, note:
     zones_y = "".join(f"<span>{i}</span>" for i in range(1, 5))
     note_html = (f'<p class="margin-note" aria-hidden="true"><svg viewBox="0 0 60 30"><path d="M4 22 C 18 26, 36 18, 54 6 M44 6 L54 6 L50 15"/></svg>'
                  f'{esc(note)}</p>') if note else ""
-    return f"""<section id="{sid}" class="sheet-wrap" aria-labelledby="{hid}">
-<div class="sheet{' sheet--wide' if wide else ''}">
+    return f"""<section id="{sid}" class="sheet-wrap{' sheet-wrap--tabs' if tabs else ''}" aria-labelledby="{hid}">
+{tabs}<div class="sheet{' sheet--wide' if wide else ''}">
 <div class="zones zones-x" aria-hidden="true">{zones_x}</div><div class="zones zones-y" aria-hidden="true">{zones_y}</div>
 <header class="sheet-head" data-reveal>
 <p class="sheet-no" aria-hidden="true">{no:02d}</p>
@@ -398,7 +398,7 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
                     for key, p in progs.items())
     copy = ('<p class="eyebrow">Shell Eco-marathon · <span class="long">Tec de Monterrey, Guadalajara</span>'
             '<span class="short">Tec GDL</span></p>'
-            f'<h1 id="hero-title"><span class="line">One kilowatt-hour,</span> <span class="line accent">{laps} laps.</span></h1>'
+            f'<h1 id="hero-title"><span class="line">One <span class="nowrap">kilowatt-hour,</span></span> <span class="line accent">{laps} laps.</span></h1>'
             f'<p class="lede">{h["km_per_kwh"]} km on the energy of a single kilowatt-hour: {laps} laps of '
             f'Indianapolis Motor Speedway at the {esc(h["event"])}.</p>'
             f'<p class="cta"><a class="btn btn-primary" href="#engineering">See the engineering</a>'
@@ -520,6 +520,9 @@ def metrics_html(rows: list[list[str]]) -> str:
         elif a is not None:
             out.append(f'<figure class="metric metric--big" data-reveal><b class="big">{esc(after)}<small>{u}</small></b>'
                        f'<figcaption>{esc(name)}</figcaption></figure>')
+        elif after:  # a milestone rather than a number ("Functional")
+            out.append(f'<figure class="metric metric--big metric--text" data-reveal><b class="big">{esc(after)}</b>'
+                       f'<figcaption>{esc(name)}</figcaption></figure>')
     return f'<div class="metrics">{"".join(out)}</div>' if out else ""
 
 
@@ -618,12 +621,29 @@ def project_page(key: str, text: str, data: dict) -> str:
     fig, ftitle = FIGS.get(key, (0, title))
     keys = list(data["projects"])
     i = keys.index(key) if key in keys else -1
-    nxt = data["projects"][keys[(i + 1) % len(keys)]] if i >= 0 else None
-    pager = (f'<nav class="pager" aria-label="Next area"><a href="{nxt["page"].split("/")[-1].removesuffix(".md")}">'
-             f'<span class="k">Next · {esc(nxt.get("discipline", ""))}</span><span class="t">{esc(nxt["name"])} →</span></a></nav>') if nxt else ""
-    inner = f'{diagrams.sheet(key, fig, ftitle)}<div class="doc-body">{md_to_html(rest)}</div>'
-    body = (f'<div class="sheet-page">{sheet("doc", max(fig, 1), "ENG", p.get("discipline", "Engineering"), title, inner, h="h1", lede=inline_md(lede) if lede else "")}'
-            f'<div class="block">{pager}</div></div>')
+
+    def href(k: str) -> str:
+        return data["projects"][k]["page"].split("/")[-1].removesuffix(".md")
+
+    # divider tabs on the sheet's top edge: every area one click away, the open one merged with the sheet
+    tab_items = "".join(
+        f'<li><a href="{href(k)}"{" aria-current=" + chr(34) + "page" + chr(34) if k == key else ""}>'
+        f'<span class="n">{FIGS.get(k, (j + 1,))[0]:02d}</span><span class="t">{esc(data["projects"][k]["name"])}</span></a></li>'
+        for j, k in enumerate(keys))
+    tabs = f'<nav class="sheet-tabs" aria-label="Engineering areas"><ol>{tab_items}</ol></nav>'
+
+    # drawing references to the neighbouring sheets, in the sheet itself
+    def ref(k: str, rel: str) -> str:
+        n = FIGS.get(k, (0,))[0]
+        arrow = ("◂ ", "") if rel == "prev" else ("", " ▸")
+        return (f'<a rel="{rel}" href="{href(k)}"><span class="k">{arrow[0]}{"Previous" if rel == "prev" else "Next"} sheet{arrow[1]}</span>'
+                f'<span class="t">ELY-ENG-{n:02d} · {esc(data["projects"][k]["name"])}</span></a>')
+    refs = ""
+    if i >= 0 and len(keys) > 1:
+        refs = (f'<nav class="sheet-refs" aria-label="Neighbouring areas">{ref(keys[i - 1], "prev")}'
+                f'{ref(keys[(i + 1) % len(keys)], "next")}</nav>')
+    inner = f'{diagrams.sheet(key, fig, ftitle)}<div class="doc-body">{md_to_html(rest)}</div>{refs}'
+    body = (f'<div class="sheet-page">{sheet("doc", max(fig, 1), "ENG", p.get("discipline", "Engineering"), title, inner, h="h1", lede=inline_md(lede) if lede else "", tabs=tabs)}</div>')
     cur = "adc" if key == "adc" else "engineering"
     return page(title, body, 1, lede and re.sub(r"<[^>]+>", "", inline_md(lede)), current=cur)
 

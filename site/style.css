@@ -66,10 +66,10 @@ h2 { font-weight: 800; font-size: clamp(1.7rem, 3.4vw, 2.6rem); }
 h3 { font-weight: 750; font-size: 1.2rem; }
 
 .eyebrow {
-  display: inline-flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;
+  display: block; margin-bottom: 1rem;  /* block, so a long label wraps as one line of text (flex split it into columns) */
   font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--silver);
 }
-.eyebrow::before { content: ""; width: 1.6rem; height: 2px; background: var(--signal); }
+.eyebrow::before { content: ""; display: inline-block; vertical-align: 0.3em; width: 1.6rem; height: 2px; margin-right: 0.6rem; background: var(--signal); }
 .eyebrow .short { display: none; }
 .lede { max-width: var(--measure); font-size: clamp(1.08rem, 1.4vw, 1.22rem); color: var(--muted); margin-top: 1.2rem; text-wrap: pretty; }
 .note { max-width: var(--measure); color: var(--muted); font-size: 0.92rem; margin-top: 1.25rem; }
@@ -129,25 +129,26 @@ main { display: block; }
 .hero-copy h1 { max-width: 15ch; }
 .hero-copy h1 .line { display: block; }
 .hero-copy h1 .accent { color: var(--signal); }
+.hero-copy h1 .nowrap { white-space: nowrap; }
 .hero-copy .lede { max-width: 46ch; }
 .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
 .hero-track { grid-area: track; position: relative; margin: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .hero-svg { width: 100%; height: auto; max-height: 46svh; overflow: visible; }
 
 @media (min-width: 961px) {
-  /* Wide courses (Indianapolis): the course fills the stage, anchored bottom right, and the copy sits in
-     its empty top-left quarter; the readout runs along the foot like a timing strip. */
+  /* Wide courses (Indianapolis): two balanced columns that never overlap: the copy on the left; on the
+     right the course with the readout and the pause button under it. */
   .hero--wide .hero-grid {
-    grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "stage stage" "hud toggle";
-    grid-template-rows: 1fr auto; align-content: stretch;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-areas: "copy track" "copy hud" "copy toggle";
+    grid-template-rows: auto auto auto; column-gap: clamp(2.5rem, 5vw, 4.5rem); row-gap: 1rem; align-content: center;
   }
-  .hero--wide .hero-copy { grid-area: stage; align-self: start; position: relative; z-index: 1; }
-  .hero--wide .hero-copy h1 { max-width: none; font-size: clamp(2.8rem, 5.4vw, 4.9rem); }
-  .hero--wide .hero-track { grid-area: stage; align-self: stretch; min-height: 24rem; }
-  .hero--wide .hero-svg { position: absolute; right: 0; bottom: 0; width: 66%; height: 82%; max-height: none; }
-  .hero--wide .hud { grid-template-columns: minmax(11rem, 1.4fr) repeat(3, minmax(6.5rem, 1fr)) minmax(13rem, 1.8fr); }
-  .hero--wide .hud-meter, .hero--wide .hud-status { grid-column: auto; }
-  .hero--wide .motion-toggle { align-self: stretch; border-radius: var(--radius); padding: 0 1.25rem; }
+  .hero--wide .hero-copy { grid-area: copy; align-self: center; }
+  .hero--wide .hero-copy h1 { max-width: none; font-size: clamp(2.6rem, 4vw, 4.1rem); }
+  .hero--wide .hero-track { grid-area: track; align-self: end; }
+  .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(36svh, 20rem); }
+  .hero--wide .hud { grid-area: hud; }
+  .hero--wide .motion-toggle { grid-area: toggle; justify-self: end; align-self: start; }
 
   /* Compact courses (Silesia Ring): copy and readout on the left, the course on the right. */
   .hero--square .hero-grid {
@@ -466,14 +467,6 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .doc-grid { display: grid; gap: 2.5rem 4rem; }
 .doc-aside .facts--stack { grid-template-columns: 1fr; gap: 1rem; }
 .project .doc-body { max-width: 56rem; }
-.pager { max-width: 56rem; margin-top: 4rem; }
-.pager a {
-  display: flex; flex-direction: column; gap: 0.2rem; padding: 1.25rem 1.5rem; border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface); text-decoration: none; transition: border-color var(--t-med) ease;
-}
-.pager a:hover { border-color: rgb(94 151 255 / 0.55); }
-.pager .k { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.pager .t { font-stretch: 125%; font-weight: 800; font-size: 1.35rem; color: var(--text); }
 @media (min-width: 1100px) {
   .doc-grid--aside, .person .doc-grid { grid-template-columns: minmax(0, 52rem) minmax(14rem, 18rem); align-items: start; }
   .doc-aside { position: sticky; top: calc(var(--bar-h) + 2rem); padding: 1.25rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
@@ -508,8 +501,8 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
   --pencil: #575c63;       /* 5.9:1 */
   --pen: #1f4fbf;          /* blue pen accents and links: 6.4:1 */
   --hl: rgb(94 151 255 / 0.32);
-  --grid-minor: rgb(23 50 92 / 0.07);
-  --grid-major: rgb(23 50 92 / 0.14);
+  --grid-minor: rgb(23 50 92 / 0.045);
+  --grid-major: rgb(23 50 92 / 0.1);
   --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   --hand: "Caveat", "Segoe Print", "Comic Sans MS", cursive;
 }
@@ -520,7 +513,8 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
   --pad: clamp(1.75rem, 5vw, 4.5rem);
   --frame: 14px;
   position: relative; color: var(--ink);
-  padding: clamp(2.75rem, 5vw, 4rem) var(--pad) var(--frame);
+  --rule: 1.5px;
+  padding: clamp(2.75rem, 5vw, 4rem) var(--pad) calc(var(--frame) + var(--rule));
   border-radius: 3px;
   background-color: var(--paper);
   background-image:
@@ -532,7 +526,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 /* drafting frame: a heavy line with a thin one just inside */
 .sheet::before {
   content: ""; position: absolute; inset: var(--frame); pointer-events: none;
-  border: 1.5px solid rgb(23 50 92 / 0.6); box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 5px rgb(23 50 92 / 0.22);
+  border: var(--rule) solid rgb(23 50 92 / 0.6);
 }
 .zones { position: absolute; display: flex; justify-content: space-around; pointer-events: none;
   font: 600 9px/1 var(--mono); color: rgb(23 50 92 / 0.55); letter-spacing: 0.05em; }
@@ -555,6 +549,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .margin-note {
   align-self: end; max-width: 13ch; margin-bottom: 0.25rem; text-align: center;
   font: 700 1.6rem/1 var(--hand); color: var(--pen); transform: rotate(-5deg); transform-origin: right bottom;
+  text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 10px var(--paper);
 }
 .margin-note svg { display: block; width: 3.5rem; height: auto; margin: 0 0 0.2rem 0.5rem; transform: scaleX(-1); fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -573,8 +568,9 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 /* CAD title block, sitting on the bottom-right corner of the frame */
 .title-block {
   display: grid; grid-template-columns: 1.25fr 1.1fr 2.4fr 0.7fr 0.6fr 0.6fr;
-  width: min(calc(100% + var(--pad) - var(--frame)), 60rem); margin: 3.5rem calc(var(--frame) - var(--pad)) 0 auto;
-  border-top: 1.5px solid rgb(23 50 92 / 0.6); border-left: 1.5px solid rgb(23 50 92 / 0.6); background: rgb(255 255 255 / 0.4);
+  width: min(calc(100% + var(--pad) - var(--frame) - var(--rule)), 60rem);
+  margin: 3.5rem calc(var(--frame) + var(--rule) - var(--pad)) 0 auto;  /* flush with the inside of the frame line */
+  border-top: var(--rule) solid rgb(23 50 92 / 0.6); border-left: var(--rule) solid rgb(23 50 92 / 0.6); background: rgb(255 255 255 / 0.6);
   font: 600 0.72rem/1.25 var(--mono); color: var(--ink);
 }
 .title-block > span { padding: 0.45rem 0.65rem; border-left: 1px solid rgb(23 50 92 / 0.35); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -646,6 +642,35 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sheet .sketch-svg .d-dot { fill: var(--ink); }
 .sheet .sketch-svg .d-dot-acc { fill: var(--pen); }
 
+
+/* divider tabs on the top edge of an engineering sheet: every area one click away; the open one is part of the sheet */
+.sheet-wrap--tabs { margin-top: clamp(2.5rem, 6vw, 4rem); }
+.sheet-tabs ol { display: flex; gap: 6px; margin: 0; padding: 0 clamp(0.75rem, 3vw, 2.5rem); list-style: none; overflow-x: auto; scrollbar-width: none; }
+.sheet-tabs ol::-webkit-scrollbar { display: none; }
+.sheet-tabs li { flex: 0 0 auto; }
+.sheet-tabs a {
+  display: flex; align-items: baseline; gap: 0.55rem; min-height: 44px; padding: 0.7rem 1rem 0.55rem;
+  border-radius: 9px 9px 0 0; background: #e2dac6; color: var(--ink); text-decoration: none;
+  font: 700 0.74rem/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  transform: translateY(6px); box-shadow: inset 0 -6px 8px -6px rgb(23 50 92 / 0.25);
+  transition: transform var(--t-med) var(--ease-out), background-color var(--t-fast) ease;
+}
+.sheet-tabs a:hover { transform: translateY(2px); background: #ebe4d2; color: var(--ink); }
+.sheet-tabs .n { color: var(--pen); }
+.sheet-tabs a[aria-current="page"] { position: relative; z-index: 1; transform: none; padding-bottom: 0.9rem; margin-bottom: -2px;
+  background: var(--paper); box-shadow: none; }
+.sheet-tabs a[aria-current="page"] .t { text-decoration: underline; text-decoration-color: var(--pen); text-decoration-thickness: 2px; text-underline-offset: 0.35em; }
+.sheet-tabs a:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+.sheet-wrap--tabs .sheet { border-top-left-radius: 0; }
+
+/* references to the neighbouring sheets, written like the cross-references of a drawing set */
+.sheet-refs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px dashed rgb(23 50 92 / 0.45); }
+.sheet-refs a { display: flex; flex-direction: column; gap: 0.2rem; min-height: 44px; padding: 0.6rem 0.8rem; border: 1.5px solid transparent; color: var(--ink); text-decoration: none; }
+.sheet-refs a[rel="next"] { text-align: right; align-items: flex-end; }
+.sheet-refs a:hover { border-color: var(--ink); background: rgb(255 255 255 / 0.6); color: var(--ink); }
+.sheet-refs .k { font: 700 0.66rem/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--pen); }
+.sheet-refs .t { font-weight: 750; font-stretch: 112%; }
+
 /* ---------------------------------------------------------------- monogram: initials in a hand-drawn circle */
 .mono { position: relative; display: inline-grid; place-items: center; flex: none; width: 3.25rem; height: 3.25rem; color: var(--ink); }
 .mono svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -664,7 +689,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sheet .member { padding: 1.1rem 1.25rem; }
 .sheet .member .tag { margin-top: 0.35rem; font: 600 0.68rem/1.3 var(--mono); color: var(--pen); letter-spacing: 0.06em; }
 .sheet .member .dwg { margin-left: auto; align-self: flex-start; font: 600 0.62rem/1 var(--mono); color: var(--pencil); letter-spacing: 0.08em; writing-mode: vertical-rl; }
-.sheet .member--join { background: transparent; border-style: dashed; }
+.sheet .member--join { background: rgb(251 248 241 / 0.92); border-style: dashed; }
 .sheet .member--join:hover { background: rgb(255 255 255 / 0.5); }
 
 /* social links: handle with icon on the data sheet, icon buttons on the crew cards (above the card link) */
@@ -716,6 +741,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .metric--big .big { font-stretch: 125%; font-weight: 850; font-size: clamp(2.6rem, 5vw, 3.4rem); line-height: 1; color: var(--ink);
   background: linear-gradient(transparent 62%, var(--hl) 62%); width: fit-content; padding-right: 0.15em; }
 .metric--big .big small { font-size: 0.4em; font-stretch: 100%; color: var(--ink-soft); }
+.metric--text .big { font-size: clamp(2rem, 3.6vw, 2.6rem); }
 
 /* revision history */
 .revs { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.75rem; }
@@ -738,6 +764,8 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 
 @media (max-width: 760px) {
   .sheet { --pad: 1.15rem; --frame: 8px; padding-top: 2.25rem; }
+  .sheet-refs { grid-template-columns: 1fr; }
+  .sheet-refs a[rel="next"] { text-align: left; align-items: flex-start; }
   .zones { display: none; }
   .sheet-head { grid-template-columns: 1fr; }
   .sheet-no { font-size: 2.2rem; }
