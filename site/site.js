@@ -126,7 +126,7 @@
 
     // --- timeline. Laps: a time-lapse, the first lap at a readable pace and each one faster, until the
     // kilowatt-hour runs out; open course: one run to the finish. Then a hold, and it starts again.
-    const lapDur = (n) => (laps ? Math.max(1.15, 7.5 * Math.pow(0.8, n - 1)) : 13);
+    const lapDur = (n) => (+ds.lapS || (laps ? Math.max(1.15, 7.5 * Math.pow(0.8, n - 1)) : 13));
     const HOLD = 5;
     let lapN = 1, q = 0, hold = 0, finished = false, live = false, raf = 0, last = 0, visible = true, hudAt = 0;
 
@@ -147,7 +147,15 @@
           : laps ? `Time-lapse ×${Math.round(tLap / lapDur(lapN))}` : ds.running || "Running";
       }
       if (hud.speed) hud.speed.firstChild.nodeValue = String(kmh);
-      if (laps) {
+      if (laps && hud.time) {  // the race: distance, the clock against the limit and the energy used
+        const done = finished ? LAPS : lapN - 1 + p.f;
+        const secs = (finished ? LAPS : lapN - 1 + q) * tLap, LIM = +ds.limitS;
+        hud.lap.firstChild.nodeValue = String(finished ? LAPS : lapN);
+        hud.dist.firstChild.nodeValue = ((done / LAPS) * TOTAL_KM).toFixed(2);
+        hud.time.firstChild.nodeValue = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`;
+        hud.bar.parentElement.style.setProperty("--p", Math.min(1, secs / LIM).toFixed(4));
+        hud.used.firstChild.nodeValue = ((done / LAPS) * +ds.wh).toFixed(1);
+      } else if (laps) {
         const done = finished ? LAPS : lapN - 1 + p.f;
         hud.lap.firstChild.nodeValue = String(finished ? LAPS : lapN);
         hud.dist.firstChild.nodeValue = ((done / LAPS) * TOTAL_KM).toFixed(1);  // the official total, spread over the laps

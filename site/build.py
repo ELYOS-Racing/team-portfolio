@@ -286,9 +286,13 @@ def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = Fa
     sx, sy = t["start"]
     nx, ny = t["next"]
     ang = math.degrees(math.atan2(ny - sy, nx - sx))
-    flag_x, flag_y, start_dot = sx, sy, ""
-    if not t["closed"]:  # open course (ADC): dot at the start, checkered line at the finish
+    flag_x, flag_y, flag_ang, start_dot = sx, sy, ang, ""
+    if not t["closed"]:  # open course (ADC): dot at the start, checkered line at the finish, across the last stretch
         flag_x, flag_y = t["end"]
+        raw = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", t["d"])]
+        pts = list(zip(raw[0::2], raw[1::2]))
+        px, py = pts[max(0, len(pts) - 4)]
+        flag_ang = math.degrees(math.atan2(flag_y - py, flag_x - px))
         start_dot = f'<circle class="origin" cx="{sx}" cy="{sy}" r="{7 * u:.1f}"/>'
     c = 6 * u  # checker cell
     white = ' class="w"'
@@ -303,18 +307,19 @@ def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = Fa
     return f"""<svg class="track {cls}" viewBox="{t['viewBox']}" style="--u:{u:.3f}" role="img" aria-label="{esc(label)}" preserveAspectRatio="xMidYMid meet">
 <path class="lap-base" d="{t['d']}"/>
 <path class="lap" d="{t['d']}" pathLength="1000"/>
-<g class="startline" transform="translate({flag_x} {flag_y}) rotate({ang + 90:.1f})">{cells}</g>
+<g class="startline" transform="translate({flag_x} {flag_y}) rotate({flag_ang + 90:.1f})">{cells}</g>
 {start_dot}{track_annotations(t, u, hand or [], length_m) if live else ""}{live_bits}</svg>"""
 
 
-def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, mode: dict) -> str:
+def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, mode: dict, layout: str = "") -> str:
     """The course as the hero: it draws itself, then the car runs it with a live readout.
-    `mode` holds the data-* attributes read by site.js (laps or a single run)."""
+    `mode` holds the data-* attributes read by site.js (laps or a single run). `layout="race"` puts the copy
+    and the readout side by side on top and gives the whole width below to a wide course."""
     t = tracks[key]
     vb = [float(v) for v in t["viewBox"].split()]
-    shape = "wide" if vb[2] / vb[3] > 1.5 else "square"
+    shape = layout or ("wide" if vb[2] / vb[3] > 1.5 else "square")
     if mode["mode"] == "laps":
-        hand = [{"at": 0.74, "text": f"≈ {1000 / mode['laps']:.0f} Wh a lap", "off": 110}]
+        hand = [{"at": 0.74, "text": f"≈ {float(mode.get('wh-lap', 1000 / mode['laps'])):.0f} Wh a lap", "off": 110}]
     else:
         hand = [{"at": 0.05, "text": "no hands from here", "off": 130}]
     svg = track_svg(tracks, key, label, "hero-svg", live=True, hand=hand, length_m=mode.get("lap-m"))
@@ -327,7 +332,14 @@ def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, m
               '<span class="lbl">Pause motion</span></button>')
     status = ('<div class="hud-cell hud-status"><div class="hud-status-txt" aria-hidden="true"><span class="k"><i class="pulse"></i>Status</span>'
               f'<span class="v" data-hud="status">On the grid</span></div>{toggle}</div>')
-    if mode["mode"] == "laps":
+    if mode["mode"] == "laps" and "limit-s" in mode:  # the race: four laps against the clock
+        lim = int(mode["limit-s"])
+        hud = status + f"""<div class="hud-cell" aria-hidden="true"><span class="k">Lap</span><span class="v" data-hud="lap">1<small>/{mode['laps']}</small></span></div>
+<div class="hud-cell" aria-hidden="true"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
+<div class="hud-cell" aria-hidden="true"><span class="k">Distance</span><span class="v" data-hud="dist">0.00<small> / {mode['total-km']} km</small></span></div>
+<div class="hud-cell hud-meter" aria-hidden="true"><span class="k">Race time</span><span class="v" data-hud="time">0:00<small> / {lim // 60}:{lim % 60:02d}</small></span><span class="meter"><span data-hud="bar"></span></span></div>
+<div class="hud-cell hud-eff" aria-hidden="true"><span class="k">Energy used</span><span class="v" data-hud="used">0.0<small> Wh</small></span></div>"""
+    elif mode["mode"] == "laps":
         hud = status + f"""<div class="hud-cell" aria-hidden="true"><span class="k">Lap</span><span class="v" data-hud="lap">1<small>/{mode['laps']}</small></span></div>
 <div class="hud-cell" aria-hidden="true"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
 <div class="hud-cell" aria-hidden="true"><span class="k">Distance</span><span class="v" data-hud="dist">0.0<small> km</small></span></div>
@@ -597,11 +609,16 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
                       note="same track = comparable")
         rail.append(("results", "Test log"))
         h = data["hero"]
-        laps = round(h["km_per_kwh"] / h["lap_km"])
-        mode = {"mode": "laps", "laps": laps, "length-m": t["length_m"], "vmax": 32, "total-km": h["km_per_kwh"], "lap-m": int(h["lap_km"] * 1000 + 0.5),
-                "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
-        alt = (f"Animation: the outline of {p['circuit']} draws itself and a car marker runs it lap after lap while a "
-               f"readout counts laps, distance and the energy left of one kilowatt-hour. Use the Pause motion button to stop it.")
+        race_laps = 4
+        race_km = round(h["lap_km"] * race_laps, 2)
+        wh = race_km / h["km_per_kwh"] * 1000
+        mode = {"mode": "laps", "laps": race_laps, "length-m": t["length_m"], "vmax": 32, "total-km": race_km,
+                "lap-m": int(h["lap_km"] * 1000 + 0.5), "lap-s": 6.5, "limit-s": 35 * 60, "wh": f"{wh:.1f}",
+                "wh-lap": f"{wh / race_laps:.1f}",
+                "finish": f"{race_laps} laps, {race_km} km on {wh:.0f} Wh: {h['km_per_kwh']} km/kWh."}
+        alt = (f"Animation: the outline of {p['circuit']} draws itself and a car marker runs the {race_laps}-lap, "
+               f"{race_km} km attempt as a time-lapse while a readout counts laps, speed, distance, race time against "
+               f"the 35-minute limit and the energy used, about {wh:.0f} Wh. Use the Pause motion button to stop it.")
     else:
         adc_md = (ROOT / "projects" / "adc.md").read_text(encoding="utf-8")
         _, _, rest = split_page(adc_md)
@@ -618,7 +635,7 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
     copy = (f'{eyebrow(p["circuit"])}<h1 id="hero-title"><span class="line">{esc(p["name"])}</span></h1>'
             f'<p class="lede">{esc(p["summary"])}</p>')
     course = f"{p['circuit']} course outline, {t['length_m']:,.0f} m"
-    body = f"""{circuit_hero(tracks, p['track'], copy, course, alt, mode)}
+    body = f"""{circuit_hero(tracks, p['track'], copy, course, alt, mode, "race" if key == "mileage" else "")}
 {facts_sheet}
 {build_sheet}
 {extra}
