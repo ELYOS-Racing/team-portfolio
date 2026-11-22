@@ -182,8 +182,8 @@ main:focus { outline: none; }
 .motion-toggle { display: none; }
 
 /* with WebGL: a sticky stage the visitor scrolls through */
-.hero3d.is-3d { height: 280vh; }
-.hero3d.is-3d .stage { position: sticky; top: 0; height: 100vh; padding: 0; overflow: hidden; }
+.hero3d.is-3d { height: min(100vh, 56rem); }
+.hero3d.is-3d .stage { position: relative; height: 100%; padding: 0; overflow: hidden; }
 .hero3d.is-3d canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero3d.is-3d .fallback { display: none; }
 .hero3d.is-3d .overlay {
@@ -204,6 +204,6 @@ main:focus { outline: none; }
 .facts-band .facts { margin-top: 0; }
 
 @media (max-width: 760px) {
-  .hero3d.is-3d { height: 240vh; }
+  .hero3d.is-3d { height: 92vh; }
   .hero3d.is-3d .overlay { top: 1.5rem; }
 }
