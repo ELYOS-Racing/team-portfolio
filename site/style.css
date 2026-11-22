@@ -186,6 +186,29 @@ main { display: block; }
 .track .car .dot { fill: #fff; }
 .track .car .halo { fill: var(--signal); opacity: 0.28; }
 
+/* drafting marks on the hero course: they appear once the outline has drawn itself */
+.track .anno-line { fill: none; stroke: rgb(255 255 255 / 0.55); stroke-linecap: round; stroke-linejoin: round; }
+.track .anno-fill { fill: rgb(255 255 255 / 0.7); }
+.track .anno-txt { fill: var(--muted); font-family: var(--mono); font-weight: 600; letter-spacing: 0.08em; }
+.track .anno-hand { fill: var(--signal-hi); font-family: var(--hand); font-weight: 700; }
+.js .hero .anno { opacity: 0; }
+.js.is-ready .hero .anno { opacity: 1; transition: opacity 0.9s ease 2s; }
+@media (max-width: 640px) { .hero .anno { display: none; } }
+
+/* the hero as a drawing: a thin frame with zone marks */
+.hero-frame { position: absolute; inset: 18px max(10px, calc((100% - var(--wrap)) / 2 + 6px)); border: 1px solid rgb(255 255 255 / 0.18); pointer-events: none; }
+.hero-frame .zones { color: rgb(255 255 255 / 0.45); }
+.hero-frame .zones-x { left: 0; right: 0; top: 4px; }
+.hero-frame .zones-y { top: 0; bottom: 0; left: 5px; }
+@media (max-width: 640px) { .hero-frame { display: none; } }
+
+/* a hand-drawn swash under the headline's accent line */
+.hero-copy h1 .accent { position: relative; width: fit-content; }
+.swash { position: absolute; left: -2%; bottom: -0.2em; width: 104%; height: 0.34em; overflow: visible; pointer-events: none; }
+.swash path { fill: none; stroke: var(--signal-hi); stroke-width: 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.js .swash path { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.js.is-ready .swash path { stroke-dashoffset: 0; transition: stroke-dashoffset 0.9s var(--ease-in-out) 1s; }
+
 /* Entrance, gated by html.is-ready (fonts in, set by site.js) so nothing shows in a fallback position.
    The faint base outline is there from the first paint: the course never pops in. */
 .js .hero .lap { stroke-dasharray: 1000; stroke-dashoffset: 1000; }

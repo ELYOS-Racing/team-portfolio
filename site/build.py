@@ -139,7 +139,123 @@ def inline_md(s: str) -> str:
     return re.sub(r"^<p>(.*)</p>$", r"\1", out.strip(), flags=re.S)
 
 
-def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = False) -> str:
+def track_annotations(t: dict, u: float, hand: list, length_m: float | None = None) -> str:
+    """Drafting marks around a hero course, computed from the outline itself so they fit any track:
+    start/finish labels, the running direction, the length callout, a north arrow and a scale bar in the
+    two emptiest corners, and handwritten notes (`hand`: {"at": fraction or "start", "text": ...})."""
+    raw = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", t["d"])]
+    pts = list(zip(raw[0::2], raw[1::2]))
+    if t["closed"]:
+        pts.append(pts[0])
+    cum = [0.0]
+    for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+        cum.append(cum[-1] + math.hypot(x2 - x1, y2 - y1))
+    total = cum[-1]
+    upm = total / t["length_m"]                       # viewBox units per metre
+    cx = sum(x for x, _ in pts) / len(pts)
+    cy = sum(y for _, y in pts) / len(pts)
+
+    def at(f: float):
+        target, i = f * total, 1
+        while i < len(cum) - 1 and cum[i] < target:
+            i += 1
+        a = (target - cum[i - 1]) / max(cum[i] - cum[i - 1], 1e-9)
+        (x1, y1), (x2, y2) = pts[i - 1], pts[i]
+        x, y = x1 + a * (x2 - x1), y1 + a * (y2 - y1)
+        ln = math.hypot(x2 - x1, y2 - y1) or 1
+        tx, ty = (x2 - x1) / ln, (y2 - y1) / ln
+        nx, ny = -ty, tx
+        if (x + nx - cx) ** 2 + (y + ny - cy) ** 2 < (x - cx) ** 2 + (y - cy) ** 2:
+            nx, ny = -nx, -ny                          # normal pointing out of the course
+        return x, y, tx, ty, nx, ny
+
+    fs, fh, sw = 21 * u, 34 * u, 1.6 * u
+    out = []
+    vx, vy, vw, vh = (float(v) for v in t["viewBox"].split())
+
+    def inside(x, y, pad=24 * u, spill=60 * u):
+        return vx - spill <= x <= vx + vw + spill and vy - spill <= y <= vy + vh - pad
+
+    def side(x, y, nx, ny, off):
+        """Normal for a mark `off` away from the course: outward unless that leaves the drawing."""
+        return (nx, ny) if inside(x + nx * off, y + ny * off) else (-nx, -ny)
+
+    taken = []
+
+    def txt(x, y, s_, cls="anno-txt", anchor="middle", size=fs, rot=0.0):
+        taken.append((x, y))
+        tr = f' transform="rotate({rot:.1f} {x:.1f} {y:.1f})"' if rot else ""
+        out.append(f'<text class="{cls}" x="{x:.1f}" y="{y:.1f}" text-anchor="{anchor}" style="font-size:{size:.1f}px"{tr}>{esc(s_)}</text>')
+
+    def line(d):
+        out.append(f'<path class="anno-line" d="{d}" style="stroke-width:{sw:.2f}px"/>')
+
+    # start / finish
+    labels = [(0.0, "S/F")] if t["closed"] else [(0.0, "START"), (1.0, "FINISH")]
+    for f, lab in labels:
+        x, y, tx, ty, nx, ny = at(min(f, 0.9999))
+        nx, ny = side(x, y, nx, ny, 60 * u)
+        line(f"M{x + nx * 12 * u:.1f},{y + ny * 12 * u:.1f} L{x + nx * 34 * u:.1f},{y + ny * 34 * u:.1f}")
+        txt(x + nx * 54 * u, y + ny * 54 * u + fs * 0.35, lab)
+
+    # running direction, just after the start
+    x, y, tx, ty, nx, ny = at(0.1)
+    nx, ny = side(x, y, nx, ny, 50 * u)
+    ox, oy = x + nx * 22 * u, y + ny * 22 * u
+    a1, a2 = (ox - tx * 30 * u, oy - ty * 30 * u), (ox + tx * 30 * u, oy + ty * 30 * u)
+    hx1, hy1 = a2[0] - tx * 9 * u + nx * 6 * u, a2[1] - ty * 9 * u + ny * 6 * u
+    hx2, hy2 = a2[0] - tx * 9 * u - nx * 6 * u, a2[1] - ty * 9 * u - ny * 6 * u
+    line(f"M{a1[0]:.1f},{a1[1]:.1f} L{a2[0]:.1f},{a2[1]:.1f} M{hx1:.1f},{hy1:.1f} L{a2[0]:.1f},{a2[1]:.1f} L{hx2:.1f},{hy2:.1f}")
+    ang = math.degrees(math.atan2(ty, tx))
+    if ang > 90 or ang < -90:
+        ang += 180
+    txt(ox + nx * 16 * u, oy + ny * 16 * u + fs * 0.35, "clockwise" if t["closed"] else "run direction", rot=ang)
+
+    # length callout halfway round
+    x, y, tx, ty, nx, ny = at(0.5)
+    nx, ny = side(x, y, nx, ny, 80 * u)
+    ex, ey = x + nx * 70 * u, y + ny * 70 * u
+    sgn = 1 if nx >= 0 else -1
+    line(f"M{x + nx * 10 * u:.1f},{y + ny * 10 * u:.1f} L{ex:.1f},{ey:.1f} L{ex + sgn * 40 * u:.1f},{ey:.1f}")
+    txt(ex + sgn * 46 * u, ey + fs * 0.35, f"{'lap' if t['closed'] else 'course'} {length_m or t['length_m']:,.0f} m",
+        anchor="start" if sgn > 0 else "end")
+
+    # handwritten notes
+    for h in hand:
+        f = 0.0 if h["at"] == "start" else h["at"]
+        x, y, tx, ty, nx, ny = at(f)
+        nx, ny = side(x, y, nx, ny, (h.get("off", 90) + 60) * u)
+        txt(x + nx * h.get("off", 90) * u, y + ny * h.get("off", 90) * u, h["text"], cls="anno-hand", size=fh, rot=-6)
+
+    # north arrow and scale bar: the free spot (on a grid of candidates) furthest from the course and the labels
+    obstacles = pts[::2] + taken
+    m = 80 * u
+    cands = [(vx + m + i * (vw - 2 * m) / 7, vy + m + j * (vh - 2 * m) / 5) for i in range(8) for j in range(6)]
+    nx0, ny0 = max(cands, key=lambda c: min((c[0] - ox) ** 2 + (c[1] - oy) ** 2 for ox, oy in obstacles))
+    inward = 1 if nx0 < vx + vw / 2 else -1
+    north = (-1.0, 0.0) if t.get("screen_up") == "east" else (0.0, -1.0)
+    r = 30 * u
+    out.append(f'<circle class="anno-line" cx="{nx0:.1f}" cy="{ny0:.1f}" r="{r:.1f}" style="stroke-width:{sw:.2f}px"/>')
+    tipx, tipy = nx0 + north[0] * 25 * u, ny0 + north[1] * 25 * u
+    tailx, taily = nx0 - north[0] * 25 * u, ny0 - north[1] * 25 * u
+    px_, py_ = -north[1], north[0]
+    out.append(f'<path class="anno-fill" d="M{tipx:.1f},{tipy:.1f} L{nx0 + px_ * 8 * u:.1f},{ny0 + py_ * 8 * u:.1f} '
+               f'L{tailx:.1f},{taily:.1f} L{nx0 - px_ * 8 * u:.1f},{ny0 - py_ * 8 * u:.1f} Z"/>')
+    txt(nx0 + north[0] * 46 * u, ny0 + north[1] * 46 * u + fs * 0.35, "N")
+    target = 0.14 * vw / upm
+    bar = max(b for b in (25, 50, 100, 200, 250, 500, 1000) if b <= max(target, 25))
+    bl = bar * upm
+    bx = nx0 + inward * 60 * u if inward > 0 else nx0 - 60 * u - bl   # beside the north arrow, toward the middle
+    by = ny0 + 3 * u
+    out.append(f'<rect class="anno-fill" x="{bx:.1f}" y="{by:.1f}" width="{bl / 2:.1f}" height="{7 * u:.1f}"/>')
+    out.append(f'<rect class="anno-line" x="{bx + bl / 2:.1f}" y="{by:.1f}" width="{bl / 2:.1f}" height="{7 * u:.1f}" style="stroke-width:{sw:.2f}px"/>')
+    txt(bx, by - 10 * u, "0")
+    txt(bx + bl, by - 10 * u, f"{bar} m")
+    return f'<g class="anno" aria-hidden="true">{"".join(out)}</g>'
+
+
+def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = False, hand: list | None = None,
+              length_m: float | None = None) -> str:
     """Course outline. Stroke widths scale with --u so every course reads the same at its display size.
     With live=True it also carries the faint base line, the trail and the car used by the circuit animation."""
     t = tracks[key]
@@ -166,7 +282,7 @@ def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = Fa
 <path class="lap-base" d="{t['d']}"/>
 <path class="lap" d="{t['d']}" pathLength="1000"/>
 <g class="startline" transform="translate({flag_x} {flag_y}) rotate({ang + 90:.1f})">{cells}</g>
-{start_dot}{live_bits}</svg>"""
+{start_dot}{track_annotations(t, u, hand or [], length_m) if live else ""}{live_bits}</svg>"""
 
 
 def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, mode: dict) -> str:
@@ -175,7 +291,11 @@ def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, m
     t = tracks[key]
     vb = [float(v) for v in t["viewBox"].split()]
     shape = "wide" if vb[2] / vb[3] > 1.5 else "square"
-    svg = track_svg(tracks, key, label, "hero-svg", live=True)
+    if mode["mode"] == "laps":
+        hand = [{"at": 0.74, "text": f"≈ {1000 / mode['laps']:.0f} Wh a lap", "off": 110}]
+    else:
+        hand = [{"at": 0.05, "text": "no hands from here", "off": 130}]
+    svg = track_svg(tracks, key, label, "hero-svg", live=True, hand=hand, length_m=mode.get("lap-m"))
     if shape == "wide":  # anchored bottom right, leaving the top-left quarter to the copy
         svg = svg.replace('preserveAspectRatio="xMidYMid meet"', 'preserveAspectRatio="xMaxYMax meet"')
     attrs = " ".join(f'data-{k}="{esc(str(v))}"' for k, v in mode.items())
@@ -197,7 +317,11 @@ def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, m
         n += 1
         return f'{m.group(0)} data-enter style="--i:{n - 1}"'
     copy_html = re.sub(r'<(?:h1|p class="(?:eyebrow|lede|cta)")', enter, copy_html)
+    zones = ('<div class="hero-frame" aria-hidden="true"><div class="zones zones-x">'
+             + "".join(f"<span>{c}</span>" for c in "ABCDEFGH") + '</div><div class="zones zones-y">'
+             + "".join(f"<span>{i}</span>" for i in range(1, 5)) + "</div></div>")
     return f"""<section class="hero hero--{shape}" data-circuit {attrs} aria-labelledby="hero-title">
+{zones}
 <div class="hero-grid">
 <div class="hero-copy">{copy_html}</div>
 <figure class="hero-track">{svg}
@@ -398,7 +522,7 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
                     for key, p in progs.items())
     copy = ('<p class="eyebrow">Shell Eco-marathon · <span class="long">Tec de Monterrey, Guadalajara</span>'
             '<span class="short">Tec GDL</span></p>'
-            f'<h1 id="hero-title"><span class="line">One <span class="nowrap">kilowatt-hour,</span></span> <span class="line accent">{laps} laps.</span></h1>'
+            f'<h1 id="hero-title"><span class="line">One <span class="nowrap">kilowatt-hour,</span></span> <span class="line accent">{laps} laps.<svg class="swash" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 17 C 70 7, 170 5, 296 12" pathLength="1"/></svg></span></h1>'
             f'<p class="lede">{h["km_per_kwh"]} km on the energy of a single kilowatt-hour: {laps} laps of '
             f'Indianapolis Motor Speedway at the {esc(h["event"])}.</p>'
             f'<p class="cta"><a class="btn btn-primary" href="#engineering">See the engineering</a>'
@@ -407,7 +531,7 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
            f"speeding up as a time-lapse, while a readout counts laps, distance and the energy left of one "
            f"kilowatt-hour, down to zero after {laps} laps and {h['km_per_kwh']} km. Use the Pause motion button to stop it.")
     mode = {"mode": "laps", "laps": laps, "length-m": tracks[progs['mileage']['track']]["length_m"],
-            "total-km": h["km_per_kwh"], "vmax": 32, "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
+            "total-km": h["km_per_kwh"], "lap-m": int(h["lap_km"] * 1000 + 0.5), "vmax": 32, "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
     about = sheet("about", 1, "WEB", "Who we are", "A student team chasing every watt.",
                   f'<div class="split">{split}</div>', note="two challenges, one car",
                   lede=esc(data["tagline"]))
@@ -448,7 +572,7 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         rail.append(("results", "Test log"))
         h = data["hero"]
         laps = round(h["km_per_kwh"] / h["lap_km"])
-        mode = {"mode": "laps", "laps": laps, "length-m": t["length_m"], "vmax": 32, "total-km": h["km_per_kwh"],
+        mode = {"mode": "laps", "laps": laps, "length-m": t["length_m"], "vmax": 32, "total-km": h["km_per_kwh"], "lap-m": int(h["lap_km"] * 1000 + 0.5),
                 "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
         alt = (f"Animation: the outline of {p['circuit']} draws itself and a car marker runs it lap after lap while a "
                f"readout counts laps, distance and the energy left of one kilowatt-hour. Use the Pause motion button to stop it.")

@@ -265,7 +265,7 @@ def electronics() -> Sheet:
 def mechanics() -> Sheet:
     """A drafting-course sheet: side and top views, centre lines, hidden lines, dimensions in mm taken from the
     CAD assembly's bounding box, item balloons and a parts list. Proportions are the car's; wheel size is schematic."""
-    s = Sheet("mechanics", h=540)
+    s = Sheet("mechanics", h=576)
     # ---------------- side view (nose left); 2 700 mm over 520 px
     s.note(40, 38, "SIDE VIEW", size="big")
     s.note(40, 60, "dimensions in mm", size="small")
@@ -293,10 +293,13 @@ def mechanics() -> Sheet:
     # ---------------- top view (nose up), not to the same scale
     s.note(668, 38, "TOP VIEW", size="big")
     s.note(668, 60, "left turn, wheels steered", size="small")
-    s.path("M790,92 C826,94 848,140 848,214 C848,312 830,404 805,452 C800,460 780,460 775,452 "
-           "C750,404 732,312 732,214 C732,140 754,94 790,92 Z", cls="d-line d-thin", wobble=False)
-    s.center(790, 80, 790, 486)
-    kl, kr, t = (754, 186), (826, 186), (790, 520)
+    oy = 34                                   # the whole view sits lower, clear of its title and the width dimension
+    body = ("M790,92 C826,94 848,140 848,214 C848,312 830,404 805,452 C800,460 780,460 775,452 "
+            "C750,404 732,312 732,214 C732,140 754,94 790,92 Z")
+    d = s._d()
+    s.ink.append(f'<path class="d-line d-thin" transform="translate(0 {oy})" d="{body}" pathLength="1" style="--d:{d}"/>')
+    s.center(790, 80 + oy, 790, 486 + oy)
+    kl, kr, t = (754, 186 + oy), (826, 186 + oy), (790, 520 + oy)
     s.path(f"M{kl[0]},{kl[1]} L{kr[0]},{kr[1]}", cls="d-line d-thin")                    # front axle
     ends = []
     for k in (kl, kr):                        # steering arms aimed behind the rear wheel
@@ -311,15 +314,15 @@ def mechanics() -> Sheet:
         d = s._d()
         s.ink.append(f'<path class="d-line" transform="rotate({ang} {cx} {cy})" d="{s._rect(cx - 6, cy - 24, 12, 48, 3)}" pathLength="1" style="--d:{d}"/>')
         s.path(f"M{cx},{cy - 34} L{cx},{cy - 52}", cls="d-line d-hair", wobble=False)
-    s.note(731, 132, "δi", size="small", anchor="middle")
-    s.note(842, 138, "δo", size="small", anchor="middle")
+    s.note(731, 132 + oy, "δi", size="small", anchor="middle")
+    s.note(842, 138 + oy, "δo", size="small", anchor="middle")
     d = s._d()
-    s.ink.append(f'<path class="d-line" d="{s._rect(784, 396, 12, 48, 3)}" pathLength="1" style="--d:{d}"/>')  # rear wheel
-    s.path("M732,214 L732,72 M848,214 L848,72", cls="d-line d-hair")                     # extension lines
-    s.dim(732, 80, 848, 80, "≈ 810")
-    s.balloon(904, 230, 2, 808, 208)
-    s.balloon(690, 250, 4, 748, 196)
-    s.note(904, 534, "δi > δo: partial Ackermann", size="small", anchor="end", accent=True)
+    s.ink.append(f'<path class="d-line" d="{s._rect(784, 396 + oy, 12, 48, 3)}" pathLength="1" style="--d:{d}"/>')  # rear wheel
+    s.path(f"M732,{214 + oy} L732,{98} M848,{214 + oy} L848,{98}", cls="d-line d-hair")  # extension lines
+    s.dim(732, 106, 848, 106, "≈ 810")
+    s.balloon(904, 230 + oy, 2, 808, 208 + oy)
+    s.balloon(690, 250 + oy, 4, 748, 196 + oy)
+    s.note(904, 566, "δi > δo: partial Ackermann", size="small", anchor="end", accent=True)
 
     # ---------------- parts list
     x0, x1, x2, x3, y0, rh = 40, 92, 268, 604, 404, 24
