@@ -30,7 +30,7 @@ REPO = "https://github.com/ELYOS-Racing/team-portfolio"
 BASE_URL = "https://elyos-racing.github.io/team-portfolio/"
 # Archivo for everything; Caveat only for the handwritten notes in the diagrams (its file loads only where used)
 FONTS = ("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900"
-         "&family=Caveat:wght@500..700&display=swap")
+         "&family=Caveat:wght@500..700&family=JetBrains+Mono:wght@500..800&display=swap")
 # Runs before first paint and costs nothing: only flags that JS is on, so entrance states apply.
 # (No WebGL probe here any more: creating a GL context in <head> blocked the first paint.)
 HEAD_JS = '<script>document.documentElement.classList.add("js")</script>'
@@ -272,13 +272,25 @@ def initials(name: str) -> str:
 
 
 def members_list(members: list[dict], up: str = "") -> str:
-    cards = "".join(f'<li class="member" data-reveal><span class="avatar" aria-hidden="true">{esc(initials(m["name"]))}</span>'
-                    f'<span class="who"><a class="stretch" href="{up}members/{m["slug"]}">{esc(m["name"])}</a>'
-                    f'<span class="area">{esc(m["area"])}</span></span></li>' for m in members)
-    join = (f'<li class="member member--join" data-reveal><span class="avatar" aria-hidden="true">+</span>'
+    """Crew sheet: one small title block per member, plus the invitation to publish."""
+    cards = []
+    for m in members:
+        tag = f'<span class="tag">{esc(m["seasons"])}</span>' if m.get("seasons") else ""
+        cards.append(f'<li class="member" data-reveal>{monogram(m["name"], "sm")}'
+                     f'<span class="who"><a class="stretch" href="{up}members/{m["slug"]}">{esc(m["name"])}</a>'
+                     f'<span class="area">{esc(m["area"])}</span>{tag}</span>'
+                     f'<span class="dwg" aria-hidden="true">{esc(m.get("dwg", ""))}</span></li>')
+    join = (f'<li class="member member--join" data-reveal><span class="mono mono--sm mono--empty" aria-hidden="true">+</span>'
             f'<span class="who"><a class="stretch" href="{REPO}/blob/main/members/TEMPLATE.md">Your page here</a>'
             f'<span class="area">Team members publish their own page with one pull request</span></span></li>')
-    return f'<ul class="members">{cards}{join}</ul>'
+    return f'<ul class="members">{"".join(cards)}{join}</ul>'
+
+
+def monogram(name: str, size: str = "") -> str:
+    """Initials inside a hand-drawn double circle (the ink layer wobbles like the diagrams)."""
+    return (f'<span class="mono{f" mono--{size}" if size else ""}" aria-hidden="true">'
+            f'<svg viewBox="0 0 100 100"><circle class="m1" cx="50" cy="50" r="44" pathLength="1"/>'
+            f'<circle class="m2" cx="51" cy="49" r="40" pathLength="1"/></svg><b>{esc(initials(name))}</b></span>')
 
 
 def car_section(data: dict) -> str:
@@ -298,6 +310,37 @@ chassis, steering and wheels visible inside. It turns slowly on its own; drag to
 
 def section_head(eyebrow_text: str, title: str, hid: str, extra: str = "") -> str:
     return f'<header class="block-head" data-reveal>{eyebrow(eyebrow_text)}<h2 id="{hid}">{esc(title)}</h2>{extra}</header>'
+
+
+SEASON = "2027"
+
+
+def sheet(sid: str, no: int, dwg: str, kicker: str, title: str, body: str, note: str = "", lede: str = "",
+          h: str = "h2", wide: bool = False) -> str:
+    """A drawing sheet on graph paper: zone marks in the frame, a numbered head with a dimension line,
+    an optional handwritten margin note, the content, and a CAD title block at the foot."""
+    code = f"ELY-{dwg}-{no:02d}"
+    hid = f"{sid}-title"
+    zones_x = "".join(f"<span>{c}</span>" for c in "ABCDEF")
+    zones_y = "".join(f"<span>{i}</span>" for i in range(1, 5))
+    note_html = (f'<p class="margin-note" aria-hidden="true"><svg viewBox="0 0 60 30"><path d="M4 22 C 18 26, 36 18, 54 6 M44 6 L54 6 L50 15"/></svg>'
+                 f'{esc(note)}</p>') if note else ""
+    return f"""<section id="{sid}" class="sheet-wrap" aria-labelledby="{hid}">
+<div class="sheet{' sheet--wide' if wide else ''}">
+<div class="zones zones-x" aria-hidden="true">{zones_x}</div><div class="zones zones-y" aria-hidden="true">{zones_y}</div>
+<header class="sheet-head" data-reveal>
+<p class="sheet-no" aria-hidden="true">{no:02d}</p>
+<div class="sheet-title"><p class="kicker">{esc(kicker)}</p><{h} id="{hid}">{esc(title)}</{h}>{f'<p class="lede">{lede}</p>' if lede else ''}</div>
+{note_html}
+</header>
+<div class="dim" data-reveal aria-hidden="true"><span>{code}</span></div>
+<div class="sheet-body">{body}</div>
+<footer class="title-block" aria-hidden="true">
+<span class="tb-team"><b>ELYOS</b> Racing Team</span><span><i>DWG</i>{code}</span><span class="tb-title"><i>Title</i>{esc(title)}</span>
+<span><i>Season</i>{SEASON}</span><span><i>Scale</i>NTS</span><span><i>Sheet</i>{no:02d}</span>
+</footer>
+</div>
+</section>"""
 
 
 # figure numbers and titles of the project diagrams, in home-page order
@@ -329,44 +372,44 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
            f"kilowatt-hour, down to zero after {laps} laps and {h['km_per_kwh']} km. Use the Pause motion button to stop it.")
     mode = {"mode": "laps", "laps": laps, "length-m": tracks[progs['mileage']['track']]["length_m"],
             "total-km": h["km_per_kwh"], "vmax": 32, "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
+    about = sheet("about", 1, "WEB", "Who we are", "A student team chasing every watt.",
+                  f'<div class="split">{split}</div>', note="two challenges, one car",
+                  lede=esc(data["tagline"]))
+    eng = sheet("engineering", 2, "WEB", "Engineering", "Everything on the car, designed by students.",
+                project_cards(data, list(data["projects"])), note="each page has its own drawing",
+                lede="Mechanics, electronics, embedded control, data, simulation and autonomy: what we built and why, "
+                     "with a diagram of how it works. The design files and the code stay private.")
+    res = sheet("results", 3, "WEB", "Test log", "Every attempt, on the record.",
+                results_list(data) + '<p class="note">Best official attempt of each event. Tracks differ between events, '
+                'so bars compare only within the same circuit.</p>', note="same track = comparable")
+    team = sheet("members", 4, "WEB", "Crew", "The people behind it", members_list(members),
+                 lede="Each member writes their own page, in résumé language, with what they built and measured.")
     body = f"""{circuit_hero(tracks, progs['mileage']['track'], copy,
                      "Outline of the Mileage Challenge course at Indianapolis Motor Speedway", alt, mode)}
 {stats_band(data)}
-<section id="about" class="block intro" aria-labelledby="intro-title">
-{section_head("Who we are", "A student team chasing every watt.", "intro-title", f'<p class="lede">{esc(data["tagline"])}</p>')}
-<div class="split">{split}</div>
-</section>
-<section id="engineering" class="block" aria-labelledby="eng-title">
-{section_head("Engineering", "Everything on the car, designed by students.", "eng-title",
-              '<p class="lede">Mechanics, electronics, embedded control, data, simulation and autonomy. Each page explains '
-              'what we built and why, with a diagram of how it works; the design files and code stay private.</p>')}
-{project_cards(data, list(data["projects"]))}
-</section>
+{about}
+{eng}
 {car_section(data)}
-<section id="results" class="block" aria-labelledby="results-title">
-{section_head("Results", "Every attempt, on the record.", "results-title")}
-{results_list(data)}
-<p class="note">Best official attempt of each event. Tracks differ between events, so bars compare only within the same circuit.</p>
-</section>
-<section id="members" class="band band--alt" aria-labelledby="members-title"><div class="block">
-{section_head("Team", "The people behind it", "members-title",
-              '<p class="lede">Each member writes their own page, in résumé language, with what they built and measured.</p>')}
-{members_list(members)}
-</div></section>
+{res}
+{team}
 <section class="block sources" aria-labelledby="sources-title"><h2 id="sources-title">Sources</h2><ul>{"".join(f'<li><a href="{s["url"]}">{esc(s["label"])}</a></li>' for s in data["sources"])}</ul></section>"""
     rail = [("content", "Start"), ("about", "Who we are"), ("engineering", "Engineering"), ("car", "The car"),
-            ("results", "Results"), ("members", "Team")]
+            ("results", "Test log"), ("members", "Crew")]
     return page("", body, 0, data["tagline"], car3d=True, rail=rail)
 
 
 def program_page(key: str, data: dict, tracks: dict) -> str:
     p = data["programs"][key]
     t = tracks[p["track"]]
-    rail = [("content", "Course"), ("facts-title", "Key facts"), ("build-title", "What we build")]
+    code = "MIL" if key == "mileage" else "ADC"
+    rail = [("content", "Course"), ("facts", "Key facts"), ("build", "What we build")]
+    facts_sheet = sheet("facts", 1, code, "Rules of the attempt", "Key facts", facts(p["facts"], p["facts_source"]),
+                        note="from the official rules")
+    build_sheet = sheet("build", 2, code, "Engineering", "What we build", project_cards(data, p['projects']))
     if key == "mileage":
-        extra = f"""<section id="results" class="block" aria-labelledby="results-title">
-{section_head("Results", "Every attempt, on the record.", "results-title")}{results_list(data)}</section>"""
-        rail.append(("results", "Results"))
+        extra = sheet("results", 3, code, "Test log", "Every attempt, on the record.", results_list(data),
+                      note="same track = comparable")
+        rail.append(("results", "Test log"))
         h = data["hero"]
         laps = round(h["km_per_kwh"] / h["lap_km"])
         mode = {"mode": "laps", "laps": laps, "length-m": t["length_m"], "vmax": 32, "total-km": h["km_per_kwh"],
@@ -379,9 +422,9 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         # drop the first paragraph of adc.md: it repeats the program summary shown in the hero
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
         fig, ftitle = FIGS["adc"]
-        extra = f"""<section id="kit" class="block" aria-labelledby="kit-title">
-{section_head("The kit", "What goes on the car.", "kit-title")}{diagrams.sheet("adc", fig, ftitle)}
-<div class="doc-body">{md_to_html(rest)}</div></section>"""
+        extra = sheet("kit", 3, code, "The kit", "What goes on the car.",
+                      diagrams.sheet("adc", fig, ftitle) + f'<div class="doc-body">{md_to_html(rest)}</div>',
+                      note="nothing comes back to the car")
         rail.append(("kit", "The kit"))
         mode = {"mode": "run", "length-m": t["length_m"], "vmax": 22, "finish": "Finish line, no hands.", "running": "Driving itself"}
         alt = (f"Animation: the outline of the {p['circuit']} course draws itself and a car marker drives it on its own "
@@ -390,45 +433,146 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
             f'<p class="lede">{esc(p["summary"])}</p>')
     course = f"{p['circuit']} course outline, {t['length_m']:,.0f} m"
     body = f"""{circuit_hero(tracks, p['track'], copy, course, alt, mode)}
-<section class="block facts-band" aria-labelledby="facts-title"><h2 id="facts-title" class="sr-only">Key facts</h2>{facts(p["facts"], p["facts_source"])}</section>
-<section class="block" aria-labelledby="build-title">{section_head("Engineering", "What we build", "build-title")}{project_cards(data, p['projects'])}</section>
+{facts_sheet}
+{build_sheet}
 {extra}
 <p class="block fine">Course outline from the official coordinates of the Shell Eco-marathon Data and Telemetry Portal.</p>"""
     return page(p["name"], body, 0, p["summary"], current=key, rail=rail)
 
 
-def member_page(slug: str, text: str) -> tuple[str, dict]:
+# ------------------------------------------------------------------ member: the engineer's data sheet
+
+# "Worked on": areas come from the Area field; only strategy work is also recognised in the text
+AREA_PROJECTS = (("motor", "driver"), ("firmware", "driver"), ("telemetry", "telemetry"), ("autonomous", "adc"),
+                 ("adc", "adc"), ("electronic", "electronics"), ("mechanic", "mechanics"), ("strategy", "strategy"))
+TEXT_PROJECTS = (("energy-strategy", "strategy"), ("energy strategy", "strategy"), ("loss-budget", "strategy"))
+
+
+def split_sections(md: str) -> tuple[str, list[tuple[str, str]]]:
+    """Text before the first '## ', and every '## heading' with its body."""
+    parts = re.split(r"^## (.+)$", md, flags=re.M)
+    return parts[0], [(parts[i].strip(), parts[i + 1]) for i in range(1, len(parts), 2)]
+
+
+def md_table(body: str) -> list[list[str]]:
+    rows = [[c.strip() for c in l.strip().strip("|").split("|")] for l in body.splitlines() if l.strip().startswith("|")]
+    return [r for r in rows[2:]] if len(rows) > 2 else []
+
+
+def num(s: str) -> float | None:
+    try:
+        return float(s.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def metrics_html(rows: list[list[str]]) -> str:
+    out = []
+    for r in rows:
+        r = (r + ["", "", "", ""])[:4]
+        name, before, after, unit = r
+        b, a = num(before), num(after)
+        u = f" {esc(unit)}" if unit else ""
+        if b and a is not None:
+            hi, lo = max(b, a), min(b, a)
+            ratio = hi / lo if lo else 0
+            verb = "lower" if a < b else "higher"
+            out.append(f"""<figure class="metric" data-reveal><figcaption>{esc(name)}</figcaption>
+<div class="bars"><span class="mbar mbar--before" style="--w:{b / hi:.3f}"><i>before</i><b>{esc(before)}{u}</b></span>
+<span class="mbar mbar--after" style="--w:{a / hi:.3f}"><i>after</i><b>{esc(after)}{u}</b></span></div>
+<p class="ratio"><span class="dimline" aria-hidden="true"></span><b>{ratio:.1f}× {verb}</b></p></figure>""")
+        elif a is not None:
+            out.append(f'<figure class="metric metric--big" data-reveal><b class="big">{esc(after)}<small>{u}</small></b>'
+                       f'<figcaption>{esc(name)}</figcaption></figure>')
+    return f'<div class="metrics">{"".join(out)}</div>' if out else ""
+
+
+def split_skills(text: str) -> list[str]:
+    items, depth, cur = [], 0, ""
+    for ch in re.sub(r"\s+", " ", text.strip().rstrip(".")):
+        depth += (ch == "(") - (ch == ")")
+        if ch == "," and depth == 0:
+            items.append(cur.strip())
+            cur = ""
+        else:
+            cur += ch
+    return [i for i in items + [cur.strip()] if i]
+
+
+def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
     title, f, rest = split_page(text)
+    intro, sections = split_sections(rest)
     gh = re.search(r"\[([^\]]+)\]\((https://github\.com/[^)]+)\)", f.get("GitHub", ""))
-    meta = [f'<div><dt>Area</dt><dd>{inline_md(f.get("Area", ""))}</dd></div>' if f.get("Area") else "",
-            f'<div><dt>Seasons</dt><dd>{inline_md(f.get("Seasons on the team", ""))}</dd></div>'
-            if f.get("Seasons on the team") else "",
-            f'<div><dt>GitHub</dt><dd><a href="{gh.group(2)}">{esc(gh.group(1))}</a></dd></div>' if gh else "",
-            f'<div><dt>LinkedIn</dt><dd>{inline_md(f["LinkedIn"])}</dd></div>'
-            if f.get("LinkedIn") and "optional" not in f["LinkedIn"] else "",
-            f'<div><dt>Degree</dt><dd>{inline_md(f["Degree"])}</dd></div>' if f.get("Degree") else ""]
-    body = f"""<article class="doc person">
-<header class="doc-head"><span class="avatar avatar--lg" aria-hidden="true">{esc(initials(title))}</span>{eyebrow("Member")}<h1>{esc(title)}</h1></header>
-<div class="doc-grid"><div class="doc-body">{md_to_html(rest)}</div>
-<aside class="doc-aside" aria-label="Profile"><dl class="facts facts--stack">{"".join(meta)}</dl></aside></div>
-</article>"""
-    info = {"slug": slug, "name": title, "area": re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", f.get("Area", ""))}
-    return page(title, body, 1, f"{title}, {info['area']}, Elyos Racing Team", current="members"), info
+    seasons_txt = f.get("Seasons on the team") or f.get("Semesters on the team", "")
+    area = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", f.get("Area", ""))
+    revs = sorted(((int(m.group(1)), m.group(2).strip(), body) for h, body in sections
+                   if (m := re.match(r"Season (\d{4})\s*·\s*(.+)", h))), key=lambda x: x[0])
+    role = revs[-1][1] if revs else ""
+    dwg = f"ELY-TEAM-{n:02d}"
+    metrics = next((metrics_html(md_table(b)) for h, b in sections if h.lower().startswith("measured")), "")
+    skills = next((split_skills(re.sub(r"\n+", " ", b)) for h, b in sections if h.lower() == "skills"), [])
+    others = [(h, b) for h, b in sections if not (h.lower().startswith(("measured", "skills", "season ")))]
+
+    ident = [("Role", esc(role[:1].upper() + role[1:]) if role else ""), ("Area", esc(area)),
+             ("Seasons", inline_md(seasons_txt) if seasons_txt else ""),
+             ("GitHub", f'<a href="{gh.group(2)}">{esc(gh.group(1))}</a>' if gh else ""),
+             ("LinkedIn", inline_md(f["LinkedIn"]) if f.get("LinkedIn") and "optional" not in f["LinkedIn"] else ""),
+             ("Degree", inline_md(f["Degree"]) if f.get("Degree") else "")]
+    ident_html = "".join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in ident if v)
+
+    letters = "ABCDEFGHIJ"
+    rev_html = "".join(f"""<li class="rev" data-reveal><p class="rev-tag"><b>REV {letters[i]}</b><span>{y}</span></p>
+<div class="rev-body"><h3>{esc(r[:1].upper() + r[1:])}</h3>{md_to_html(body)}</div></li>""" for i, (y, r, body) in enumerate(revs))
+    bom = "".join(f'<tr><td class="item">{i:02d}</td><td>{esc(s[:1].upper() + s[1:])}</td></tr>' for i, s in enumerate(skills, 1))
+    hits = [p for k, p in AREA_PROJECTS if k in area.lower()] + [p for k, p in TEXT_PROJECTS if k in text.lower()]
+    worked = list(dict.fromkeys(p for p in hits if p in data["projects"]))
+
+    blocks = []
+    if metrics:
+        blocks.append(f'<section class="ds-block" aria-labelledby="m-{slug}"><h2 class="ds-h" id="m-{slug}"><span>01</span>Measured results</h2>{metrics}</section>')
+    if rev_html:
+        blocks.append(f'<section class="ds-block" aria-labelledby="r-{slug}"><h2 class="ds-h" id="r-{slug}"><span>02</span>Revision history</h2><ol class="revs">{rev_html}</ol></section>')
+    if bom:
+        blocks.append(f'<section class="ds-block" aria-labelledby="b-{slug}"><h2 class="ds-h" id="b-{slug}"><span>03</span>Bill of skills</h2>'
+                      f'<table class="bom"><thead><tr><th scope="col">Item</th><th scope="col">Description</th></tr></thead><tbody>{bom}</tbody></table></section>')
+    if worked:
+        blocks.append(f'<section class="ds-block" aria-labelledby="w-{slug}"><h2 class="ds-h" id="w-{slug}"><span>04</span>Worked on</h2>{project_cards(data, worked, "../")}</section>')
+    for h, b in others:
+        blocks.append(f'<section class="ds-block"><h2 class="ds-h">{esc(h)}</h2><div class="doc-body">{md_to_html(b)}</div></section>')
+    intro_html = f'<div class="doc-body">{md_to_html(intro)}</div>' if intro.strip() else ""
+
+    body = f"""<div class="sheet-wrap sheet-wrap--page"><article class="sheet datasheet" aria-labelledby="ds-name">
+<div class="zones zones-x" aria-hidden="true">{"".join(f"<span>{c}</span>" for c in "ABCDEF")}</div><div class="zones zones-y" aria-hidden="true">{"".join(f"<span>{i}</span>" for i in range(1, 5))}</div>
+<header class="ds-head" data-reveal>
+{monogram(title, "lg")}
+<div class="ds-id"><p class="kicker">Engineer's data sheet · {dwg}</p><h1 id="ds-name">{esc(title)}</h1>
+<dl class="ds-facts">{ident_html}</dl></div>
+<p class="stamp" aria-hidden="true">Published<br><span>by its owner</span></p>
+</header>
+<div class="dim" data-reveal aria-hidden="true"><span>{dwg}</span></div>
+{intro_html}
+{"".join(blocks)}
+<footer class="title-block" aria-hidden="true">
+<span class="tb-team"><b>ELYOS</b> Racing Team</span><span><i>DWG</i>{dwg}</span><span class="tb-title"><i>Title</i>{esc(title)}</span>
+<span><i>Rev</i>{letters[len(revs) - 1] if revs else "A"}</span><span><i>Season</i>{revs[-1][0] if revs else SEASON}</span><span><i>Sheet</i>01</span>
+</footer>
+</article></div>"""
+    info = {"slug": slug, "name": title, "area": area, "dwg": dwg,
+            "seasons": re.sub(r"\s*\(.*?\)", "", re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", seasons_txt)).strip()}
+    return page(title, body, 1, f"{title}, {area}, Elyos Racing Team", current="members"), info
 
 
-def doc_page(text: str, current: str = "", kicker: str = "") -> str:
+def doc_page(text: str, current: str = "", kicker: str = "", dwg: str = "DOC", no: int = 1) -> str:
     title, f, rest = split_page(text)
     meta = "".join(f"<div><dt>{esc(k)}</dt><dd>{inline_md(v)}</dd></div>" for k, v in f.items())
     aside = f'<aside class="doc-aside" aria-label="Summary"><dl class="facts facts--stack">{meta}</dl></aside>' if meta else ""
-    body = f"""<article class="doc">
-<header class="doc-head">{eyebrow(kicker) if kicker else ""}<h1>{esc(title)}</h1></header>
-<div class="doc-grid{' doc-grid--aside' if meta else ''}"><div class="doc-body">{md_to_html(rest)}</div>{aside}</div>
-</article>"""
+    inner = f'<div class="doc-grid{" doc-grid--aside" if meta else ""}"><div class="doc-body">{md_to_html(rest)}</div>{aside}</div>'
+    body = f'<div class="sheet-page">{sheet("doc", no, dwg, kicker, title, inner, h="h1")}</div>'
     return page(title, body, 1, current=current)
 
 
 def project_page(key: str, text: str, data: dict) -> str:
-    """Engineering page: intro as the lede, the hand-drawn diagram, the spec table, then the details."""
+    """Engineering page: one sheet with the lede, the hand-drawn diagram, the spec table and the details."""
     title, _, rest = split_page(text)
     rest = rest.lstrip("\n")
     m = re.match(r"([^\n|#][^\n]*)\n", rest)
@@ -442,24 +586,16 @@ def project_page(key: str, text: str, data: dict) -> str:
     nxt = data["projects"][keys[(i + 1) % len(keys)]] if i >= 0 else None
     pager = (f'<nav class="pager" aria-label="Next area"><a href="{nxt["page"].split("/")[-1].removesuffix(".md")}">'
              f'<span class="k">Next · {esc(nxt.get("discipline", ""))}</span><span class="t">{esc(nxt["name"])} →</span></a></nav>') if nxt else ""
-    body = f"""<article class="doc project">
-<header class="doc-head">{eyebrow(p.get("discipline", "Engineering"))}<h1>{esc(title)}</h1>
-{f'<p class="lede">{inline_md(lede)}</p>' if lede else ""}</header>
-{diagrams.sheet(key, fig, ftitle)}
-<div class="doc-body">{md_to_html(rest)}</div>
-{pager}
-</article>"""
+    inner = f'{diagrams.sheet(key, fig, ftitle)}<div class="doc-body">{md_to_html(rest)}</div>'
+    body = (f'<div class="sheet-page">{sheet("doc", max(fig, 1), "ENG", p.get("discipline", "Engineering"), title, inner, h="h1", lede=inline_md(lede) if lede else "")}'
+            f'<div class="block">{pager}</div></div>')
     cur = "adc" if key == "adc" else "engineering"
     return page(title, body, 1, lede and re.sub(r"<[^>]+>", "", inline_md(lede)), current=cur)
 
 
 def engineering_index(data: dict) -> str:
-    body = f"""<article class="doc">
-<header class="doc-head">{eyebrow("Engineering")}<h1>Everything on the car, designed by students.</h1>
-<p class="lede">Six areas, one car. Each page explains what we built, how it works and what we measured, with a
-hand-drawn diagram; the design files and the code stay private.</p></header>
-{project_cards(data, list(data["projects"]), "../")}
-</article>"""
+    inner = project_cards(data, list(data["projects"]), "../")
+    body = f'<div class="sheet-page">{sheet("doc", 0, "ENG", "Engineering", "Everything on the car, designed by students.", inner, h="h1", note="six areas, one car", lede="Each page explains what we built, how it works and what we measured, with a hand-drawn diagram; the design files and the code stay private.")}</div>'
     return page("Engineering", body, 1, "Mechanics, electronics, embedded control, telemetry, energy strategy and autonomy "
                 "of the Elyos Racing Team prototype.", current="engineering")
 
@@ -504,21 +640,19 @@ def build() -> None:
 
     members = []
     (OUT / "members").mkdir()
-    for md in sorted((ROOT / "members").glob("*.md")):
-        if md.stem in ("README", "TEMPLATE"):
-            continue
-        html_page, info = member_page(md.stem, md.read_text(encoding="utf-8"))
+    for n, md in enumerate(sorted(p for p in (ROOT / "members").glob("*.md") if p.stem not in ("README", "TEMPLATE")), 1):
+        html_page, info = member_page(md.stem, md.read_text(encoding="utf-8"), data, n)
         (OUT / "members" / f"{md.stem}.html").write_text(html_page, encoding="utf-8")
         members.append(info)
-    (OUT / "members" / "index.html").write_text(page("Members", f"""<article class="doc"><header class="doc-head"><p class="eyebrow">Team</p><h1>Members</h1></header>
-{members_list(members, "../")}
-<p class="note">Each member publishes their own page with a pull request from the <a href="{REPO}/blob/main/members/TEMPLATE.md">template</a>; that pull request is their consent to make it public.</p>
-</article>""", 1, current="members"), encoding="utf-8")
+    crew = sheet("doc", 1, "TEAM", "Crew", "Members", members_list(members, "../") +
+                 f'<p class="note">Each member publishes their own page with a pull request from the <a href="{REPO}/blob/main/members/TEMPLATE.md">template</a>; that pull request is their consent to make it public.</p>',
+                 h="h1", note="one pull request each")
+    (OUT / "members" / "index.html").write_text(page("Members", f'<div class="sheet-page">{crew}</div>', 1, current="members"), encoding="utf-8")
 
     (OUT / "seasons").mkdir()
     for md in sorted((ROOT / "seasons").glob("*.md")):
         (OUT / "seasons" / f"{md.stem}.html").write_text(
-            doc_page(md.read_text(encoding="utf-8"), "mileage", f"Season {md.stem}"), encoding="utf-8")
+            doc_page(md.read_text(encoding="utf-8"), "mileage", f"Season {md.stem} · logbook", "SEA", int(md.stem) % 100), encoding="utf-8")
     (OUT / "projects").mkdir()
     for md in sorted((ROOT / "projects").glob("*.md")):
         (OUT / "projects" / f"{md.stem}.html").write_text(
@@ -528,9 +662,10 @@ def build() -> None:
     for key in data["programs"]:
         (OUT / f"{key}.html").write_text(program_page(key, data, tracks), encoding="utf-8")
     (OUT / "index.html").write_text(index(data, tracks, members), encoding="utf-8")
-    (OUT / "404.html").write_text(page("Off track", """<article class="doc"><header class="doc-head"><p class="eyebrow">404</p><h1>Off track.</h1></header>
-<p>This page does not exist. Head back to the <a href="/team-portfolio/">start line</a>.</p></article>""", 0),
-                                  encoding="utf-8")
+    lost = sheet("doc", 404 % 100, "ERR", "404", "Off track.",
+                 '<p class="lede">This page does not exist. Head back to the <a href="/team-portfolio/">start line</a>.</p>', h="h1",
+                 note="wrong turn")
+    (OUT / "404.html").write_text(page("Off track", f'<div class="sheet-page">{lost}</div>', 0), encoding="utf-8")
     print(f"built {OUT}")
 
 

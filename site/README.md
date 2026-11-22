@@ -31,6 +31,14 @@ The course outline is the hero on the home, Mileage and ADC pages. Its faint bas
 
 It is plain SVG updated with `transform` and `stroke-dashoffset` (no WebGL, no library), it stops while off screen or in a hidden tab, the Pause motion button is remembered between visits, and with reduced motion it shows the finished result without moving.
 
+### Desk and sheets
+
+The dark shell (header, hero, headline numbers, the 3D car, footer) is the desk; the content lies on it as drawing sheets (`sheet()` in `build.py`): cream graph paper, blue-pen ink, a drafting frame with zone marks (A–F, 1–4), an outlined sheet number, a dimension line that draws itself under the head, an optional handwritten margin note, highlighter on bold text and a CAD title block (drawing number `ELY-<code>-<nn>`, title, season, scale, sheet) at the foot. Type roles: Archivo for headings and text, JetBrains Mono for labels and data, Caveat only for handwritten notes. Ink on paper keeps at least 5.9:1 contrast.
+
+### Member pages: the engineer's data sheet
+
+Each `members/<user>.md` becomes a data sheet: a hand-drawn monogram and identity block (role from the latest season heading, area, seasons, links), then **Measured results** (optional table: Metric · Before · After · Unit; a row becomes before/after bars with the improvement written by hand, or one big number if Before is empty), **Revision history** (each `## Season YYYY · role` is a revision, REV A, B…), **Bill of skills** (the Skills paragraph as a numbered parts list) and **Worked on** (engineering pages matched from the Area field). The template explains the table.
+
 ### Engineering pages and their diagrams
 
 `projects/*.md` are the portfolio of the car, one page per area (mechanics, electronics, motor driver, telemetry, energy strategy, autonomy), written from the team's repositories without code or design files. The first paragraph becomes the lede, then comes the diagram, then the rest of the Markdown. The order of `projects:` in `data.yaml` sets the home cards and the "Next" link at the end of each page.

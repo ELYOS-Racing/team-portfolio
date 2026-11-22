@@ -98,7 +98,7 @@ def driver() -> Sheet:
     s.box(215, 40, 160, 72, "PI control", "Id* = 0 · Iq*", accent=True)
     s.box(440, 40, 150, 72, "inv. Park", "dq → αβ")
     s.box(650, 40, 130, 72, "SVPWM", "duty cycles")
-    s.box(810, 40, 140, 104, "Inverter", "6 MOSFETs · 48 V")
+    s.box(810, 40, 140, 104, "Inverter", "6 FETs · 48 V")
     for x in (860, 880, 900):
         s.path(f"M{x},144 L{x},250")
     s.circle(880, 300, 52, accent=True)

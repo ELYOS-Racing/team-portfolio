@@ -10,6 +10,15 @@
 | Semesters on the team | YYYY-S to YYYY-S |
 | Area | Firmware · Electronics · Mechanical · ADC · Ops |
 
+## Measured results
+
+Optional. Each row becomes a figure on your page: a before/after bar with the improvement, or a single big number if you leave Before empty. Only numbers you measured or can point to.
+
+| Metric | Before | After | Unit |
+|---|---|---|---|
+| FOC control-loop jitter | 27 | 0.6 | µs |
+| Boards brought up | | 3 | |
+
 ## Season YYYY · role
 
 What you did, in résumé language and with measurable results. For example:
