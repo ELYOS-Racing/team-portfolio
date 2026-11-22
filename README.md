@@ -2,6 +2,8 @@
 
 Student team from **Tecnológico de Monterrey, Guadalajara campus**, designing and building ultra-efficient electric prototypes for the **Shell Eco-marathon** since 2021, and since 2026 a kit for the Autonomous Driving Challenge.
 
+**Website:** <https://elyos-racing.github.io/team-portfolio/>
+
 ## Results
 
 | Season | Event | Result |

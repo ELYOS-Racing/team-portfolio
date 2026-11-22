@@ -4,4 +4,4 @@ One page per member, **only if that person creates it**: their own PR is their c
 
 | Member | Area | Seasons |
 |---|---|---|
-| | | |
+| [Luis Xavier García Pimentel Ascencio](luisxavierxd.md) | Motor control, telemetry, ADC | 2025–2026, 2026–2027 |

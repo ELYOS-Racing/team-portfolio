@@ -1,0 +1,52 @@
+# Home page content. Seasons, projects and members pages are rendered from their Markdown files.
+team: Elyos Racing Team
+tagline: >-
+  Students at Tecnológico de Monterrey, Guadalajara campus, building ultra-efficient electric
+  prototypes for the Shell Eco-marathon since 2021.
+hero:
+  km_per_kwh: 336
+  lap_km: 3.8325   # official: 15.33 km in 4 laps (Chapter II US 2026, art. 226)
+  event: Shell Eco-marathon United States 2026, Indianapolis Motor Speedway
+
+results:
+  - year: 2026
+    event: Shell Eco-marathon United States, Indianapolis
+    result: 6th place, Prototype Battery Electric
+    km_per_kwh: 336
+    page: seasons/2026.md
+  - year: 2025
+    event: Shell Eco-marathon Americas
+    result: 4th place
+    km_per_kwh: 293
+    page: seasons/2025.md
+  - year: 2024
+    event: Shell Eco-marathon Americas, Indianapolis
+    result: 4th place in the Americas, lightest car of the competition (30 kg)
+    km_per_kwh: 302
+    page: seasons/2024.md
+  - year: 2023
+    event: Shell Eco-marathon Brazil, Rio de Janeiro
+    result: 6th place, most efficient Mexican car in Shell Eco-marathon history
+    km_per_kwh: 235
+    page: seasons/2023.md
+  - year: 2023
+    event: Shell Eco-marathon Americas, Indianapolis
+    result: Debut, 2nd lightest car in the Americas (31 kg)
+    page: seasons/2023.md
+
+projects:
+  - name: Motor driver
+    page: projects/driver.md
+    summary: Field-oriented control of a BLDC motor on a 600 MHz microcontroller, tuned for the lowest possible loss.
+  - name: Telemetry
+    page: projects/telemetry.md
+    summary: Sensor fusion, logging and a live link to the pits; a predictive co-pilot is in development.
+  - name: Autonomous Driving Challenge
+    page: projects/adc.md
+    summary: A removable autonomy kit with ROS 2, simulation and energy-aware planning, aiming at ADC Poland 2027.
+
+sources:
+  - label: Official results, SEM US 2026
+    url: http://results.sem-app.com/app/sem_2026_us/P/BE
+  - label: elyosracingteam.com
+    url: https://www.elyosracingteam.com/shell-eco-marathon
