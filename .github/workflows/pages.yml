@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install markdown pyyaml
+      - run: python site/build.py --check-readme
       - run: python site/build.py
       - uses: actions/upload-pages-artifact@v3
         with:
