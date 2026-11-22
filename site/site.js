@@ -125,10 +125,9 @@
     }
 
     // --- timeline. Laps: a time-lapse, the first lap at a readable pace and each one faster, until the
-    // kilowatt-hour runs out; open course: one run to the finish. Then a hold, and it starts again.
+    // kilowatt-hour runs out; open course: one run to the finish. Then it stays on the result until Replay.
     const lapDur = (n) => (+ds.lapS || (laps ? Math.max(1.15, 7.5 * Math.pow(0.8, n - 1)) : 13));
-    const HOLD = 5;
-    let lapN = 1, q = 0, hold = 0, finished = false, live = false, raf = 0, last = 0, visible = true, hudAt = 0;
+    let lapN = 1, q = 0, finished = false, live = false, raf = 0, last = 0, visible = true, hudAt = 0;
 
     function draw(force) {
       const p = finished ? at(laps ? 0 : 1) : at(q);
@@ -170,37 +169,38 @@
     }
 
     function finish() {
-      finished = true; hold = 0;
+      finished = true;
       root.classList.add("is-finished");
+      syncBtn();
     }
     function restart() {
       finished = false; lapN = 1; q = 0;
       root.classList.remove("is-finished");
+      syncBtn();
     }
 
     function frame(now) {
       raf = 0;
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
-      if (finished) {
-        hold += dt;
-        if (hold > HOLD) restart();
-      } else {
+      if (!finished) {
         q += dt / lapDur(lapN);
         while (q >= 1 && !finished) {
           if (laps && lapN < LAPS) { q -= 1; lapN++; } else { q = 1; finish(); }
         }
       }
-      draw(false);
+      draw(finished);
       loop();
     }
-    function loop() { if (!raf && live && visible && !motion.paused && !document.hidden) raf = requestAnimationFrame(frame); }
+    function loop() { if (!raf && live && visible && !finished && !motion.paused && !document.hidden) raf = requestAnimationFrame(frame); }
     function wake() { last = performance.now(); loop(); }
 
     function syncBtn() {
       root.classList.toggle("is-paused", motion.paused);
       if (!btn) return;
-      btn.setAttribute("aria-pressed", String(motion.paused));
-      btn.querySelector(".lbl").textContent = motion.paused ? "Play motion" : "Pause motion";
+      const replay = finished && root.classList.contains("is-finished") && !motion.paused;  // the result is on screen
+      btn.classList.toggle("is-replay", replay);
+      btn.setAttribute("aria-pressed", String(motion.paused && !replay));
+      btn.querySelector(".lbl").textContent = replay ? "Replay" : motion.paused ? "Play motion" : "Pause motion";
     }
     motion.subs.add(() => {
       syncBtn();
@@ -208,7 +208,10 @@
       if (finished && !root.classList.contains("is-finished")) restart();  // leaving the still state
       wake();
     });
-    if (btn) btn.addEventListener("click", () => motion.set(!motion.paused, true));
+    if (btn) btn.addEventListener("click", () => {
+      if (btn.classList.contains("is-replay")) { restart(); draw(true); wake(); return; }
+      motion.set(!motion.paused, true);
+    });
     syncBtn();
 
     document.addEventListener("visibilitychange", wake);

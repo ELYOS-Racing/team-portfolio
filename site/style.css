@@ -179,7 +179,7 @@ main { display: block; }
   .hero--race .hero-copy { align-self: end; }
   .hero--race .hero-copy h1 { font-size: clamp(2.3rem, min(4.4vw, 7svh), 4rem); }
   .hero--race .hero-copy .lede { margin-top: clamp(0.75rem, 2.2svh, 1.2rem); }
-  .hero--race .hud { align-self: end; }
+  .hero--race .hud { align-self: end; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1.35fr); }
   .hero--race .hud-cell { padding: 0.6rem 0.9rem; }
   .hero--race .hero-svg { max-height: min(42svh, 28rem); }
 }
@@ -275,12 +275,14 @@ main { display: block; }
 .hero.is-paused .pulse { background: var(--muted); box-shadow: none; animation: none; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgb(74 222 128 / 0); } 100% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0); } }
 .hud-status { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.hud-status-txt { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.hud-status-txt { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+/* one line, always: the finished result never makes the readout grow */
+.hud-status .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hud-meter { grid-column: span 2; }
 .hero[data-mode="run"] .hud { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
 .hero[data-mode="run"] .hud-meter { grid-column: auto; }
 .motion-toggle {
-  flex: none;
+  flex: none; min-width: 9.6rem; justify-content: center;
   display: none; align-items: center; gap: 0.55rem; min-height: 44px; padding: 0 1rem;
   background: rgb(29 60 92 / 0.9); color: var(--text); border: 1px solid var(--line-strong); border-radius: 999px;
   font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease;
@@ -293,6 +295,10 @@ main { display: block; }
 .motion-toggle .ico::after { right: 0; }
 .motion-toggle[aria-pressed="true"] .ico::before { width: 0; height: 0; border-radius: 0; background: none; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent currentColor; }
 .motion-toggle[aria-pressed="true"] .ico::after { display: none; }
+/* Replay, once the result is on screen: a circular arrow */
+.motion-toggle.is-replay .ico { width: 12px; }
+.motion-toggle.is-replay .ico::before { left: 0; top: 0; width: 12px; height: 12px; box-sizing: border-box; background: none; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; }
+.motion-toggle.is-replay .ico::after { display: block; left: auto; right: -1px; top: -1px; width: 0; height: 0; background: none; border-radius: 0; border-style: solid; border-width: 0 4px 5px 4px; border-color: transparent transparent currentColor transparent; transform: rotate(30deg); }
 
 /* ---------------------------------------------------------------- stats band */
 .stats { border-bottom: 1px solid var(--line); }
