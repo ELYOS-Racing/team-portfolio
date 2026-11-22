@@ -9,6 +9,7 @@
 | Degree | |
 | Semesters on the team | YYYY-S to YYYY-S |
 | Area | Firmware · Electronics · Mechanical · ADC · Ops |
+| Initials | (optional: shown in your monogram; by default the first letters of your first two names) |
 
 ## Measured results
 

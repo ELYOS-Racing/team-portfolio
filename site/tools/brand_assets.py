@@ -3,7 +3,7 @@
     uv run --no-project --with pillow python site/tools/brand_assets.py <ElyosLogoBlanco.png>
 
 Source logo: elyosracingteam.com (ElyosLogoBlanco.png, 6000 x 3375). Outputs in site/assets/:
-logo-white.png (web size), favicon-32.png, apple-touch-icon.png, og.png (1200 x 630 share card).
+logo-white.png (web size), logo-on-dark.png, logo-on-light.png, favicon-32.png, apple-touch-icon.png, og.png (1200 x 630 share card).
 """
 
 from __future__ import annotations
@@ -90,6 +90,25 @@ def og_card(logo: Image.Image) -> Image.Image:
     return card.convert("RGB")
 
 
+STEEL = (122, 138, 158)     # the logo's silver arm, darkened so it reads on cream paper
+
+
+def on_light(web: Image.Image) -> Image.Image:
+    """Version for the cream pages: white letters become the logo navy, the silver arm steel and the navy
+    arm signal blue (as on the dark version). Each pixel takes the nearest of the three source colours and
+    keeps its alpha, so the antialiased edges and the checkered holes stay intact."""
+    src = {(255, 255, 255): NAVY, (228, 228, 228): STEEL, NAVY: SIGNAL}
+    def remap(p):
+        r, g, b, a = p
+        if a == 0:
+            return p
+        key = min(src, key=lambda c: (c[0] - r) ** 2 + (c[1] - g) ** 2 + (c[2] - b) ** 2)
+        return src[key] + (a,)
+    out = web.copy()
+    out.putdata([remap(p) for p in out.getdata()])
+    return out
+
+
 def main(src: str) -> None:
     ASSETS.mkdir(exist_ok=True)
     logo = trimmed(Image.open(src).convert("RGBA"))
@@ -101,6 +120,7 @@ def main(src: str) -> None:
     dark.putdata([(SIGNAL + (a,)) if abs(r - 15) < 14 and abs(g - 56) < 14 and abs(b - 84) < 14 and a > 0
                   else (r, g, b, a) for r, g, b, a in dark.getdata()])
     dark.save(ASSETS / "logo-on-dark.png", optimize=True)
+    on_light(web).save(ASSETS / "logo-on-light.png", optimize=True)
     mark = y_mark(logo)
     icon(mark, 32).save(ASSETS / "favicon-32.png", optimize=True)
     icon(mark, 180).save(ASSETS / "apple-touch-icon.png", optimize=True)
@@ -110,4 +130,7 @@ def main(src: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if sys.argv[1:2] == ["--light-only"]:  # rebuild logo-on-light.png from the committed web logo
+        on_light(Image.open(ASSETS / "logo-white.png").convert("RGBA")).save(ASSETS / "logo-on-light.png", optimize=True)
+    else:
+        main(sys.argv[1])

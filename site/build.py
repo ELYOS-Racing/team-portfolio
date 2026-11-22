@@ -70,8 +70,8 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <meta property="og:image" content="{BASE_URL}assets/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#071c29">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#efe9da">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="{up}assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,7 +85,7 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <a class="skip" href="#content">Skip to content</a>
 <header class="bar">
 <div class="bar-in">
-<a class="brand" href="{up or "./"}"><img src="{up}assets/logo-on-dark.png" alt="Elyos Racing Team, home" width="132" height="44"></a>
+<a class="brand" href="{up or "./"}"><img src="{up}assets/logo-on-light.png" alt="Elyos Racing Team, home" width="132" height="44"></a>
 <nav aria-label="Main">{nav("projects/", "Engineering", "engineering")}{nav("mileage", "Mileage", "mileage")}{nav("adc", "Autonomous", "adc")}{nav("members/", "Team", "members")}</nav>
 </div>
 </header>
@@ -95,7 +95,7 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 </main>
 <footer>
 <div class="foot-in">
-<img src="{up}assets/logo-on-dark.png" alt="" width="108" height="36" loading="lazy">
+<img src="{up}assets/logo-on-light.png" alt="" width="108" height="36" loading="lazy">
 <p>Content © 2026 Luis Xavier García Pimentel Ascencio and Elyos Racing Team, <a href="{REPO}/blob/main/LICENSE.md">PolyForm Strict 1.0.0</a>. Member pages belong to each member. <a href="{REPO}">Source on GitHub</a>.</p>
 </div>
 </footer>
@@ -266,9 +266,12 @@ def facts(rows: list, source: str = "") -> str:
     return f'<dl class="facts">{cells}</dl>' + (f'<p class="fine">{esc(source)}</p>' if source else "")
 
 
-def initials(name: str) -> str:
+def initials(name: str, override: str = "") -> str:
+    """First letters of the first two names (Luis Xavier → LX), unless the member sets Initials."""
+    if override.strip() and not override.strip().startswith("("):  # "(optional…)" is the template's placeholder
+        return override.strip()[:3].upper()
     parts = [p for p in re.split(r"\s+", name) if p]
-    return (parts[0][0] + (parts[2][0] if len(parts) > 3 else parts[-1][0])).upper() if parts else "?"
+    return "".join(p[0] for p in parts[:2]).upper() if parts else "?"
 
 
 def members_list(members: list[dict], up: str = "") -> str:
@@ -276,7 +279,7 @@ def members_list(members: list[dict], up: str = "") -> str:
     cards = []
     for m in members:
         tag = f'<span class="tag">{esc(m["seasons"])}</span>' if m.get("seasons") else ""
-        cards.append(f'<li class="member" data-reveal>{monogram(m["name"], "sm")}'
+        cards.append(f'<li class="member" data-reveal>{monogram(m["name"], "sm", m.get("initials", ""))}'
                      f'<span class="who"><a class="stretch" href="{up}members/{m["slug"]}">{esc(m["name"])}</a>'
                      f'<span class="area">{esc(m["area"])}</span>{tag}</span>'
                      f'<span class="dwg" aria-hidden="true">{esc(m.get("dwg", ""))}</span></li>')
@@ -286,11 +289,11 @@ def members_list(members: list[dict], up: str = "") -> str:
     return f'<ul class="members">{"".join(cards)}{join}</ul>'
 
 
-def monogram(name: str, size: str = "") -> str:
+def monogram(name: str, size: str = "", ini: str = "") -> str:
     """Initials inside a hand-drawn double circle (the ink layer wobbles like the diagrams)."""
     return (f'<span class="mono{f" mono--{size}" if size else ""}" aria-hidden="true">'
             f'<svg viewBox="0 0 100 100"><circle class="m1" cx="50" cy="50" r="44" pathLength="1"/>'
-            f'<circle class="m2" cx="51" cy="49" r="40" pathLength="1"/></svg><b>{esc(initials(name))}</b></span>')
+            f'<circle class="m2" cx="51" cy="49" r="40" pathLength="1"/></svg><b>{esc(initials(name, ini))}</b></span>')
 
 
 def car_section(data: dict) -> str:
@@ -544,7 +547,7 @@ def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
     body = f"""<div class="sheet-wrap sheet-wrap--page"><article class="sheet datasheet" aria-labelledby="ds-name">
 <div class="zones zones-x" aria-hidden="true">{"".join(f"<span>{c}</span>" for c in "ABCDEF")}</div><div class="zones zones-y" aria-hidden="true">{"".join(f"<span>{i}</span>" for i in range(1, 5))}</div>
 <header class="ds-head" data-reveal>
-{monogram(title, "lg")}
+{monogram(title, "lg", f.get("Initials", ""))}
 <div class="ds-id"><p class="kicker">Engineer's data sheet · {dwg}</p><h1 id="ds-name">{esc(title)}</h1>
 <dl class="ds-facts">{ident_html}</dl></div>
 <p class="stamp" aria-hidden="true">Published<br><span>by its owner</span></p>
@@ -557,7 +560,7 @@ def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
 <span><i>Rev</i>{letters[len(revs) - 1] if revs else "A"}</span><span><i>Season</i>{revs[-1][0] if revs else SEASON}</span><span><i>Sheet</i>01</span>
 </footer>
 </article></div>"""
-    info = {"slug": slug, "name": title, "area": area, "dwg": dwg,
+    info = {"slug": slug, "name": title, "area": area, "dwg": dwg, "initials": f.get("Initials", ""),
             "seasons": re.sub(r"\s*\(.*?\)", "", re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", seasons_txt)).strip()}
     return page(title, body, 1, f"{title}, {area}, Elyos Racing Team", current="members"), info
 
