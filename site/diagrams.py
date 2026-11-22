@@ -1,46 +1,89 @@
 """Hand-drawn engineering diagrams, one per project, as inline SVG.
 
-Notebook look: graph paper (CSS), wobbly ink from an SVG displacement filter, handwritten notes (Caveat).
+Notebook look: graph paper (CSS), ink with a slight hand wobble, handwritten notes (Caveat). The wobble is
+geometry, not a filter: every straight stroke becomes a gentle quadratic curve whose bow is seeded per
+diagram, so lines stay crisp and antialiased and every build draws the same sheet. (An SVG displacement
+filter was tried first: it shifts pixels in whole steps and left visible nicks on long straight edges.)
 Motion (all driven by CSS classes and site.js): every line draws itself in order when the sheet scrolls
 into view (`pathLength="1"` + `--d` delay index), notes fade in after their lines, and dots travel along
 the signal paths (SMIL, paused off screen and with reduced motion or the pause button).
 
-Only facts stated in the project pages are drawn here; no code, no schematics, no CAD.
+Only facts stated in the project pages are drawn here; no code, no schematics, no CAD files.
 """
 
 from __future__ import annotations
 
 import html
 import math
+import random
+import re
 
 esc = html.escape
+_ML = re.compile(r"(?:\s*[ML]\s*-?\d+(?:\.\d+)?[\s,]+-?\d+(?:\.\d+)?)+\s*")
+_PT = re.compile(r"([ML])\s*(-?\d+(?:\.\d+)?)[\s,]+(-?\d+(?:\.\d+)?)")
 
 
 class Sheet:
     def __init__(self, key: str, w: int = 960, h: int = 480):
         self.key, self.w, self.h = key, w, h
-        self.ink: list[str] = []    # wobbly layer (filtered)
-        self.flow: list[str] = []   # moving dots (not filtered, stay crisp)
+        self.ink: list[str] = []    # the drawing
+        self.flow: list[str] = []   # moving dots
         self.n = 0
+        self.rng = random.Random(key)
 
     def _d(self) -> int:
         self.n += 1
         return self.n
 
+    # ---- hand wobble
+    def _seg(self, x1, y1, x2, y2) -> str:
+        """A straight stroke drawn by hand: a quadratic with a small seeded bow."""
+        dx, dy = x2 - x1, y2 - y1
+        ln = math.hypot(dx, dy)
+        if ln < 6:
+            return f" L{x2:g},{y2:g}"
+        amp = min(1.6, 0.35 + ln * 0.005)
+        off = self.rng.uniform(-amp, amp)
+        mx = (x1 + x2) / 2 - dy / ln * off
+        my = (y1 + y2) / 2 + dx / ln * off
+        return f" Q{mx:.1f},{my:.1f} {x2:g},{y2:g}"
+
+    def _wobble(self, d_attr: str) -> str:
+        if not _ML.fullmatch(d_attr):
+            return d_attr  # curves stay as drawn
+        out, cur = [], None
+        for cmd, xs, ys in _PT.findall(d_attr):
+            x, y = float(xs), float(ys)
+            if cmd == "M" or cur is None:
+                out.append(f"M{x:g},{y:g}")
+            else:
+                out.append(self._seg(cur[0], cur[1], x, y))
+            cur = (x, y)
+        return "".join(out)
+
+    def _rect(self, x, y, w, h, r) -> str:
+        r = min(r, w / 2, h / 2)
+        s = self._seg
+        return (f"M{x + r:g},{y:g}" + s(x + r, y, x + w - r, y) + f" Q{x + w:g},{y:g} {x + w:g},{y + r:g}"
+                + s(x + w, y + r, x + w, y + h - r) + f" Q{x + w:g},{y + h:g} {x + w - r:g},{y + h:g}"
+                + s(x + w - r, y + h, x + r, y + h) + f" Q{x:g},{y + h:g} {x:g},{y + h - r:g}"
+                + s(x, y + h - r, x, y + r) + f" Q{x:g},{y:g} {x + r:g},{y:g}")
+
     # ---- primitives
     def box(self, x, y, w, h, title, sub="", accent=False, r=8):
         d = self._d()
         cls = "d-line d-acc" if accent else "d-line"
-        self.ink.append(f'<rect class="{cls}" x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" pathLength="1" style="--d:{d}"/>')
-        cy = y + h / 2 + (-6 if sub else 8)
-        self.ink.append(f'<text class="d-txt d-title" x="{x + w / 2}" y="{cy}" text-anchor="middle" style="--d:{d}">{esc(title)}</text>')
-        if sub:
-            self.ink.append(f'<text class="d-txt d-sub" x="{x + w / 2}" y="{cy + 24}" text-anchor="middle" style="--d:{d}">{esc(sub)}</text>')
+        self.ink.append(f'<path class="{cls}" d="{self._rect(x, y, w, h, r)}" pathLength="1" style="--d:{d}"/>')
+        if title:
+            cy = y + h / 2 + (-6 if sub else 8)
+            self.ink.append(f'<text class="d-txt d-title" x="{x + w / 2}" y="{cy}" text-anchor="middle" style="--d:{d}">{esc(title)}</text>')
+            if sub:
+                self.ink.append(f'<text class="d-txt d-sub" x="{x + w / 2}" y="{cy + 24}" text-anchor="middle" style="--d:{d}">{esc(sub)}</text>')
 
-    def path(self, d_attr, cls="d-line", accent=False, dashed=False):
+    def path(self, d_attr, cls="d-line", accent=False, dashed=False, wobble=True):
         d = self._d()
         c = cls + (" d-acc" if accent else "") + (" d-dash" if dashed else "")
-        self.ink.append(f'<path class="{c}" d="{d_attr}" pathLength="1" style="--d:{d}"/>')
+        self.ink.append(f'<path class="{c}" d="{self._wobble(d_attr) if wobble else d_attr}" pathLength="1" style="--d:{d}"/>')
         return d
 
     def circle(self, cx, cy, r, accent=False, cls="d-line"):
@@ -48,24 +91,26 @@ class Sheet:
         c = cls + (" d-acc" if accent else "")
         self.ink.append(f'<circle class="{c}" cx="{cx}" cy="{cy}" r="{r}" pathLength="1" style="--d:{d}"/>')
 
-    def note(self, x, y, text, accent=False, anchor="start", size="", rot=0):
+    def note(self, x, y, text, accent=False, anchor="start", size="", rot=0, cls="d-note"):
         d = self._d()
-        c = "d-txt d-note" + (" d-acc-t" if accent else "") + (f" d-{size}" if size else "")
+        c = f"d-txt {cls}" + (" d-acc-t" if accent else "") + (f" d-{size}" if size else "")
         tr = f' transform="rotate({rot} {x} {y})"' if rot else ""
         lines = text.split("\n")
         spans = "".join(f'<tspan x="{x}" dy="{0 if i == 0 else 24}">{esc(t)}</tspan>' for i, t in enumerate(lines))
         self.ink.append(f'<text class="{c}" x="{x}" y="{y}" text-anchor="{anchor}"{tr} style="--d:{d}">{spans}</text>')
 
+    def head(self, x1, y1, x2, y2, d, accent=False, s=11):
+        a = math.atan2(y2 - y1, x2 - x1)
+        p1 = (x2 - s * math.cos(a - 0.45), y2 - s * math.sin(a - 0.45))
+        p2 = (x2 - s * math.cos(a + 0.45), y2 - s * math.sin(a + 0.45))
+        c = "d-head d-txt" + (" d-acc" if accent else "")
+        self.ink.append(f'<path class="{c}" d="M{p1[0]:.1f},{p1[1]:.1f} L{x2:g},{y2:g} L{p2[0]:.1f},{p2[1]:.1f}" style="--d:{d}"/>')
+
     def arrow(self, pts, label="", lx=None, ly=None, accent=False, dashed=False, flow=False, dur=2.4, begin=0.0):
         d_attr = "M" + " L".join(f"{x},{y}" for x, y in pts)
         d = self.path(d_attr, accent=accent, dashed=dashed)
         (x1, y1), (x2, y2) = pts[-2], pts[-1]
-        a = math.atan2(y2 - y1, x2 - x1)
-        s = 11
-        p1 = (x2 - s * math.cos(a - 0.45), y2 - s * math.sin(a - 0.45))
-        p2 = (x2 - s * math.cos(a + 0.45), y2 - s * math.sin(a + 0.45))
-        c = "d-head d-txt" + (" d-acc" if accent else "")
-        self.ink.append(f'<path class="{c}" d="M{p1[0]:.1f},{p1[1]:.1f} L{x2},{y2} L{p2[0]:.1f},{p2[1]:.1f}" style="--d:{d}"/>')
+        self.head(x1, y1, x2, y2, d, accent)
         if label:
             if lx is None:
                 lx, ly = (pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2 - 10
@@ -80,13 +125,46 @@ class Sheet:
             f'<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.85;1" dur="{dur}s" begin="{begin}s" repeatCount="indefinite"/>'
             f'</circle>')
 
+    # ---- drafting conventions (used by the mechanics sheet)
+    def center(self, x1, y1, x2, y2):
+        """Chain (dash-dot) centre line."""
+        d = self._d()
+        self.ink.append(f'<path class="d-center" d="M{x1:g},{y1:g} L{x2:g},{y2:g}" style="--d:{d}"/>')
+
+    def dim(self, x1, y1, x2, y2, text, off=0.0, ext_from=None):
+        """Dimension: extension lines from the part, a line with arrowheads at both ends and the value."""
+        dx, dy = x2 - x1, y2 - y1
+        ln = math.hypot(dx, dy)
+        nx, ny = -dy / ln, dx / ln
+        ax, ay, bx, by = x1 + nx * off, y1 + ny * off, x2 + nx * off, y2 + ny * off
+        d = self._d()
+        if off:
+            for (px, py), (qx, qy) in (((x1, y1), (ax, ay)), ((x2, y2), (bx, by))):
+                ex, ey = qx + nx * 6 * math.copysign(1, off), qy + ny * 6 * math.copysign(1, off)
+                self.ink.append(f'<path class="d-line d-thin" d="M{px + nx * 4 * math.copysign(1, off):.1f},{py + ny * 4 * math.copysign(1, off):.1f} L{ex:.1f},{ey:.1f}" pathLength="1" style="--d:{d}"/>')
+        self.ink.append(f'<path class="d-line d-thin" d="M{ax:.1f},{ay:.1f} L{bx:.1f},{by:.1f}" pathLength="1" style="--d:{d}"/>')
+        self.head(bx, by, ax, ay, d, s=9)
+        self.head(ax, ay, bx, by, d, s=9)
+        mx, my = (ax + bx) / 2, (ay + by) / 2
+        ang = math.degrees(math.atan2(dy, dx))
+        if ang > 90 or ang < -90:
+            ang += 180
+        self.ink.append(f'<text class="d-txt d-dim" x="{mx:.1f}" y="{my - 7:.1f}" text-anchor="middle" '
+                        f'transform="rotate({ang:.1f} {mx:.1f} {my:.1f})" style="--d:{d}">{esc(text)}</text>')
+
+    def balloon(self, x, y, n, tx, ty):
+        """Item balloon with a leader ending in a dot on the part."""
+        d = self._d()
+        a = math.atan2(ty - y, tx - x)
+        sx, sy = x + 13 * math.cos(a), y + 13 * math.sin(a)
+        self.ink.append(f'<path class="d-line d-thin" d="M{sx:.1f},{sy:.1f} L{tx:g},{ty:g}" pathLength="1" style="--d:{d}"/>')
+        self.ink.append(f'<circle class="d-txt d-pin" cx="{tx}" cy="{ty}" r="2.6" style="--d:{d}"/>')
+        self.ink.append(f'<circle class="d-line" cx="{x}" cy="{y}" r="13" pathLength="1" style="--d:{d}"/>')
+        self.ink.append(f'<text class="d-txt d-ball" x="{x}" y="{y + 6}" text-anchor="middle" style="--d:{d}">{n}</text>')
+
     def svg(self, label: str) -> str:
-        fid = f"rough-{self.key}"
         return (f'<svg class="sketch-svg" viewBox="0 0 {self.w} {self.h}" role="img" aria-label="{esc(label)}">'
-                f'<defs><filter id="{fid}" x="-2%" y="-2%" width="104%" height="104%">'
-                f'<feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="7"/>'
-                f'<feDisplacementMap in="SourceGraphic" scale="2.6"/></filter></defs>'
-                f'<g class="d-ink" filter="url(#{fid})">{"".join(self.ink)}</g>'
+                f'<g class="d-ink">{"".join(self.ink)}</g>'
                 f'<g class="d-flow" aria-hidden="true">{"".join(self.flow)}</g></svg>')
 
 
@@ -156,9 +234,9 @@ def electronics() -> Sheet:
     s.box(60, 160, 170, 120, "Teensy 4.1", "600 MHz · FOC", accent=True)
     s.box(300, 180, 130, 80, "Gate", "drivers")
     s.path("M480,80 L900,80")
-    s.note(900, 68, "48 V bus · 45 A", anchor="end", accent=True)
+    s.note(470, 86, "48 V bus · 45 A", anchor="end", accent=True)
     s.path("M480,392 L900,392")
-    s.note(900, 418, "GND", anchor="end")
+    s.note(470, 399, "GND", anchor="end")
     cols = (500, 640, 780)
     for i, x in enumerate(cols):
         c = x + 35
@@ -180,45 +258,85 @@ def electronics() -> Sheet:
     s.dot("M480,80 L535,80 L535,207 L597,207", dur=2.2, begin=0.2)
     s.dot("M480,80 L675,80 L675,207 L737,207", dur=2.6, begin=1.0)
     s.dot("M480,80 L815,80 L815,207 L877,207", dur=3.0, begin=1.7)
-    s.note(40, 418, "Motor driver board · 2 layers · KiCad 10, ERC + DRC on every change")
+    s.note(480, 434, "Motor driver board · 2 layers · KiCad 10, ERC + DRC on every change", anchor="middle", size="small")
     return s
 
 
 def mechanics() -> Sheet:
-    s = Sheet("mechanics")
-    s.note(30, 36, "SIDE", size="big")
-    s.path("M30,362 L570,362", cls="d-line d-thin")
-    s.path("M46,334 C70,300 150,262 260,246 C370,230 470,232 528,262 C556,278 560,322 540,338 L70,343 C54,343 44,340 46,334 Z", accent=True)
-    s.path("M232,250 C262,200 352,192 404,236", cls="d-line d-thin")
-    s.circle(130, 330, 32)
-    s.circle(470, 330, 32)
-    s.circle(470, 330, 11, accent=True)
-    s.path("M50,404 L548,404", cls="d-line d-thin")
-    s.path("M50,394 L50,414 M548,394 L548,414", cls="d-line d-thin")
-    s.note(299, 396, "≈ 2.7 m", anchor="middle")
-    s.path("M590,362 L590,196 M580,362 L600,362 M580,196 L600,196", cls="d-line d-thin")
-    s.note(604, 282, "≈ 0.8 m")
-    s.note(30, 452, "rear hub motor: 350 W, no clutch (2026) → ≈ 500 W, chain + clutch (2027)", accent=True)
-    # top view, nose up: trapezoidal steering whose arm lines meet behind the rear wheel (partial Ackermann)
-    s.note(690, 36, "TOP", size="big")
-    s.path("M790,60 C850,70 905,130 905,220 C905,320 845,410 790,420 C735,410 675,320 675,220 C675,130 730,70 790,60 Z", cls="d-line d-thin")
-    kl, kr, t = (720, 140), (860, 140), (790, 470)
-    s.path(f"M{kl[0]},{kl[1]} L{kr[0]},{kr[1]}", cls="d-line d-thin")
+    """A drafting-course sheet: side and top views, centre lines, hidden lines, dimensions in mm taken from the
+    CAD assembly's bounding box, item balloons and a parts list. Proportions are the car's; wheel size is schematic."""
+    s = Sheet("mechanics", h=540)
+    # ---------------- side view (nose left); 2 700 mm over 520 px
+    s.note(40, 38, "SIDE VIEW", size="big")
+    s.note(40, 60, "dimensions in mm", size="small")
+    g = 330                                   # ground
+    s.path(f"M40,{g} L604,{g}", cls="d-line d-thin")
+    s.path(" ".join(f"M{x},{g} l-10,12" for x in range(52, 604, 16)), cls="d-line d-hair", wobble=False)
+    wheels = ((150, 290), (500, 290))
+    for cx, cy in wheels:                     # wheels: the part under the shell is visible, the rest hidden
+        s.path(f"M{cx + 24},{322} A40,40 0 0,1 {cx - 24},{322}", wobble=False)
+        s.path(f"M{cx - 24},{322} A40,40 0 1,1 {cx + 24},{322}", cls="d-line d-thin", dashed=True, wobble=False)
+        s.circle(cx, cy, 6, cls="d-line d-thin")
+        s.center(cx, 236, cx, 346)
+    s.center(96, 290, 556, 290)
+    s.circle(500, 290, 13, accent=True)       # rear hub motor
+    s.path("M60,300 C64,262 110,232 175,222 C230,213 262,212 290,206 C310,176 360,170 395,186 "
+           "C420,196 470,205 520,220 C560,232 582,262 580,292 C578,312 560,320 530,322 L120,322 C84,322 60,314 60,300 Z",
+           accent=True, wobble=False)
+    s.path("M300,206 C318,186 360,182 388,193", cls="d-line d-thin", wobble=False)       # canopy
+    s.dim(60, g, 580, g, "≈ 2 700", off=40)
+    s.path(f"M372,177 L626,177 M584,{g} L626,{g}", cls="d-line d-hair")                   # extension lines
+    s.dim(618, g, 618, 177, "≈ 820")
+    s.balloon(250, 118, 1, 246, 212)
+    s.balloon(560, 130, 3, 506, 280)
+
+    # ---------------- top view (nose up), not to the same scale
+    s.note(668, 38, "TOP VIEW", size="big")
+    s.note(668, 60, "left turn, wheels steered", size="small")
+    s.path("M790,92 C826,94 848,140 848,214 C848,312 830,404 805,452 C800,460 780,460 775,452 "
+           "C750,404 732,312 732,214 C732,140 754,94 790,92 Z", cls="d-line d-thin", wobble=False)
+    s.center(790, 80, 790, 486)
+    kl, kr, t = (754, 186), (826, 186), (790, 520)
+    s.path(f"M{kl[0]},{kl[1]} L{kr[0]},{kr[1]}", cls="d-line d-thin")                    # front axle
     ends = []
-    for k in (kl, kr):
+    for k in (kl, kr):                        # steering arms aimed behind the rear wheel
         dx, dy = t[0] - k[0], t[1] - k[1]
         n = math.hypot(dx, dy)
-        e = (k[0] + 46 * dx / n, k[1] + 46 * dy / n)
+        e = (k[0] + 30 * dx / n, k[1] + 30 * dy / n)
         ends.append(e)
         s.path(f"M{k[0]},{k[1]} L{e[0]:.1f},{e[1]:.1f}", accent=True)
-        s.path(f"M{e[0]:.1f},{e[1]:.1f} L{t[0]},{t[1]}", dashed=True)
-    s.path(f"M{ends[0][0]:.1f},{ends[0][1]:.1f} L{ends[1][0]:.1f},{ends[1][1]:.1f}", accent=True)
-    s.box(694, 110, 18, 60, "", r=4)
-    s.box(868, 110, 18, 60, "", r=4)
-    s.box(781, 372, 18, 60, "", r=4)
-    s.note(918, 120, "steering\narm", size="small")
-    s.note(800, 214, "tie rod", size="small")
-    s.note(770, 430, "arm lines meet\nbehind the\nrear wheel", anchor="end", size="small")
+        s.path(f"M{e[0]:.1f},{e[1]:.1f} L{t[0]},{t[1]}", dashed=True, cls="d-line d-thin")
+    s.path(f"M{ends[0][0]:.1f},{ends[0][1]:.1f} L{ends[1][0]:.1f},{ends[1][1]:.1f}", accent=True)   # tie rod
+    for (cx, cy), ang in ((kl, -26), (kr, -16)):   # inner wheel turns more than the outer one
+        d = s._d()
+        s.ink.append(f'<path class="d-line" transform="rotate({ang} {cx} {cy})" d="{s._rect(cx - 6, cy - 24, 12, 48, 3)}" pathLength="1" style="--d:{d}"/>')
+        s.path(f"M{cx},{cy - 34} L{cx},{cy - 52}", cls="d-line d-hair", wobble=False)
+    s.note(731, 132, "δi", size="small", anchor="middle")
+    s.note(842, 138, "δo", size="small", anchor="middle")
+    d = s._d()
+    s.ink.append(f'<path class="d-line" d="{s._rect(784, 396, 12, 48, 3)}" pathLength="1" style="--d:{d}"/>')  # rear wheel
+    s.path("M732,214 L732,72 M848,214 L848,72", cls="d-line d-hair")                     # extension lines
+    s.dim(732, 80, 848, 80, "≈ 810")
+    s.balloon(904, 230, 2, 808, 208)
+    s.balloon(690, 250, 4, 748, 196)
+    s.note(904, 534, "δi > δo: partial Ackermann", size="small", anchor="end", accent=True)
+
+    # ---------------- parts list
+    x0, x1, x2, x3, y0, rh = 40, 92, 268, 604, 404, 24
+    rows = (("ITEM", "PART", "NOTE"), ("1", "Monocoque shell", "closed body over the chassis"),
+            ("2", "Steering", "trapezoidal, partial Ackermann"),
+            ("3", "Rear wheel", "hub motor 350 W → ≈ 500 W, chain + clutch"),
+            ("4", "Brakes", "hydraulic, on all three wheels"))
+    ylast = y0 + rh * len(rows)
+    s.path(f"M{x0},{y0} L{x3},{y0} L{x3},{ylast} L{x0},{ylast} Z", cls="d-line d-thin")
+    s.path(" ".join(f"M{x0},{y0 + rh * i} L{x3},{y0 + rh * i}" for i in range(1, len(rows))), cls="d-line d-hair")
+    s.path(f"M{x1},{y0} L{x1},{ylast} M{x2},{y0} L{x2},{ylast}", cls="d-line d-hair")
+    for i, (a, b, c) in enumerate(rows):
+        y = y0 + rh * i + 17
+        cls = "d-th" if i == 0 else "d-tab"
+        s.note((x0 + x1) / 2, y, a, anchor="middle", cls=cls)
+        s.note(x1 + 10, y, b, cls=cls)
+        s.note(x2 + 10, y, c, cls=cls)
     return s
 
 
@@ -292,7 +410,7 @@ CAPTIONS = {
     "driver": "Field-oriented control, every 100 µs: currents measured, turned into the rotor's frame, corrected and sent back as PWM.",
     "telemetry": "Sensors fused by a Kalman filter into one live state, logged, shown to the driver and sent to the pits.",
     "electronics": "The motor-driver board: a Teensy 4.1 drives three half-bridges on the 48 V bus and reads the current through shunt amplifiers.",
-    "mechanics": "Side view with overall size, and the trapezoidal steering seen from above: the arm lines meet behind the rear wheel, so the inner wheel turns more.",
+    "mechanics": "Side and top views with overall dimensions in mm, item balloons and parts list. From above, the trapezoidal steering: the arm lines meet behind the rear wheel, so the inner wheel turns more.",
     "strategy": "Pulse and glide: short pushes with the motor at its efficient point, long glides with it off; and what each improvement is worth.",
     "adc": "The autonomy pipeline, entirely on board, and the one-way telemetry to the cloud and the digital twin.",
 }

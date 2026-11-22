@@ -444,6 +444,16 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sketch-svg .d-big { font-size: 30px; font-weight: 700; }
 .sketch-svg .d-acc-t { fill: var(--signal-hi); }
 .sketch-svg .d-dot { fill: var(--text); }
+/* drafting conventions: hairlines, chain centre lines, dimensions, balloons and a parts list */
+.sketch-svg .d-hair { stroke-width: 1; stroke: rgb(23 50 92 / 0.45); }
+.sketch-svg .d-center { fill: none; stroke: rgb(23 50 92 / 0.55); stroke-width: 1; stroke-dasharray: 14 4 2 4; }
+.sketch-svg .d-dim { font-size: 19px; font-weight: 700; fill: var(--text); }
+.sketch-svg .d-ball { font-size: 18px; font-weight: 700; fill: var(--text); }
+.sketch-svg .d-pin { fill: var(--text); }
+.sketch-svg .d-tab { font-size: 17px; font-weight: 600; fill: var(--silver); }
+.sketch-svg .d-th { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; fill: var(--text); }
+.js .sketch .d-center { opacity: 0; }
+.js .sketch.is-in .d-center { opacity: 1; transition: opacity 0.6s ease; transition-delay: calc(var(--d) * 55ms); }
 .sketch-svg .d-dot-acc { fill: var(--signal-hi); }
 /* drawing order: lines draw, then their labels appear (each element carries its --d index) */
 .js .sketch .d-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
@@ -641,6 +651,11 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sheet .sketch-svg .d-acc-t { fill: var(--pen); }
 .sheet .sketch-svg .d-dot { fill: var(--ink); }
 .sheet .sketch-svg .d-dot-acc { fill: var(--pen); }
+.sheet .sketch-svg .d-hair { stroke: rgb(23 50 92 / 0.45); }
+.sheet .sketch-svg .d-center { stroke: rgb(23 50 92 / 0.55); }
+.sheet .sketch-svg .d-dim, .sheet .sketch-svg .d-ball, .sheet .sketch-svg .d-th { fill: var(--ink); }
+.sheet .sketch-svg .d-pin { fill: var(--ink); }
+.sheet .sketch-svg .d-tab { fill: var(--ink-soft); }
 
 
 /* divider tabs on the top edge of an engineering sheet: every area one click away; the open one is part of the sheet */
