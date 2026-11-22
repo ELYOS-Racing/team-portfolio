@@ -29,13 +29,23 @@ The course outline is the hero on the home, Mileage and ADC pages. Its faint bas
 - **Mileage** (closed course): a time-lapse, the first lap at a readable pace and each one faster, until the kilowatt-hour runs out after 88 laps and 336 km; then it holds and starts again.
 - **ADC** (open course): one autonomous run from the start dot to the checkered finish line.
 
+Once the outline has drawn itself, drafting marks appear around it, computed from the outline so they fit any course (`track_annotations()` in `build.py`): start/finish labels, the running direction, a length callout (the official 3,833 m lap at Indianapolis), a north arrow and a metre scale bar in the freest spot, and a handwritten note ("≈ 11 Wh a lap", "no hands from here"). The hero sits in a thin drawing frame with zone marks, and a hand-drawn swash underlines "88 laps.". Marks that would leave the drawing switch to the inner side of the track; they are hidden on phones.
+
 It is plain SVG updated with `transform` and `stroke-dashoffset` (no WebGL, no library), it stops while off screen or in a hidden tab, the Pause motion button is remembered between visits, and with reduced motion it shows the finished result without moving.
+
+### Desk and sheets
+
+The page is a soft blueprint desk (mid blue with a faint white grid) between deep-navy header and footer bands that carry the official white logo; the hero, the headline numbers and the 3D car sit on the desk, and the content lies on it as drawing sheets (`sheet()` in `build.py`): cream graph paper, blue-pen ink, a drafting frame with zone marks (A–F, 1–4), an outlined sheet number, a dimension line that draws itself under the head, an optional handwritten margin note, highlighter on bold text and a CAD title block (drawing number `ELY-<code>-<nn>`, title, season, scale, sheet) at the foot. Type roles: Archivo for headings and text, JetBrains Mono for labels and data, Caveat only for handwritten notes. Ink on paper keeps at least 5.9:1 contrast.
+
+### Member pages: the engineer's data sheet
+
+Each `members/<user>.md` becomes a data sheet: a hand-drawn monogram (first letters of the first two names, or the optional `Initials` field) and identity block (role from the latest season heading, area, seasons, and GitHub and LinkedIn links with icons, also shown on the crew cards), then **Measured results** (optional table: Metric · Before · After · Unit; a row becomes before/after bars with the improvement written by hand, or one big number if Before is empty), **Revision history** (each `## Season YYYY · role` is a revision, REV A, B…), **Bill of skills** (the Skills paragraph as a numbered parts list) and **Worked on** (engineering pages matched from the Area field). The template explains the table.
 
 ### Engineering pages and their diagrams
 
 `projects/*.md` are the portfolio of the car, one page per area (mechanics, electronics, motor driver, telemetry, energy strategy, autonomy), written from the team's repositories without code or design files. The first paragraph becomes the lede, then comes the diagram, then the rest of the Markdown. The order of `projects:` in `data.yaml` sets the home cards and the "Next" link at the end of each page.
 
-Each diagram in `diagrams.py` is built from a few primitives (`box`, `arrow`, `path`, `circle`, `note`) on a 960 × 480 sheet. The look is an engineering notebook: graph paper, ink made slightly wobbly by an SVG displacement filter, handwritten notes in Caveat, and a CAD-style title block (figure, title, caption, scale). When the sheet scrolls into view every line draws itself in the order it was added, labels appear after their lines, and dots travel along the signal paths; the dots pause off screen, in a hidden tab, with the Pause motion button and with reduced motion. On phones the sheet keeps its size and scrolls sideways. To add one: write a function that returns a `Sheet`, register it in `SHEETS` and `CAPTIONS`, and give it a figure number in `FIGS` in `build.py`. Draw only what the project page states.
+Each diagram in `diagrams.py` is built from a few primitives (`box`, `arrow`, `path`, `circle`, `note`, plus the drafting helpers `center`, `dim` and `balloon` used by the mechanics sheet) on a 960 × 480 sheet. The look is an engineering notebook: graph paper, ink with a slight hand wobble drawn as geometry (each straight stroke becomes a gentle, seeded quadratic, so lines stay crisp; a displacement filter left nicks on long edges), handwritten notes in Caveat, and a CAD-style title block (figure, title, caption, scale). When the sheet scrolls into view every line draws itself in the order it was added, labels appear after their lines, and dots travel along the signal paths; the dots pause off screen, in a hidden tab, with the Pause motion button and with reduced motion. On phones the sheet keeps its size and scrolls sideways. To add one: write a function that returns a `Sheet`, register it in `SHEETS` and `CAPTIONS`, and give it a figure number in `FIGS` in `build.py`. Draw only what the project page states.
 
 ### Wide screens
 
@@ -45,11 +55,12 @@ From 1560 px a chapter rail sits in the left margin of the home and competition 
 
 | Token | Hex | Use |
 |---|---|---|
-| Navy | `#0F3854` | From the logo: meters, hover surfaces |
-| Deep navy | `#08202F` | Header, hero and footer |
+| Navy | `#0F3854` | From the logo |
+| Deep navy | `#08202F` | Header and footer bands (official logo in white) |
 | Silver | `#E4E4E4` | From the logo: rules (at low opacity) and text accents |
-| Page | `#071C29` | Page background (one dark theme everywhere) |
-| Signal blue | `#5E97FF` | Reserved for data: course outlines, the car marker, bars, readouts, diagram highlights, links and buttons (eyebrow labels are silver) |
+| Blueprint desk | `#24476B` | Page background with a faint white grid |
+| Sheet / ink | `#F8F4EA` / `#17325C` | Drawing sheets and the blue-black pen on them |
+| Blue pen / signal | `#1F4FBF` / `#9CC0FF` | Data and actions: the pen on the sheets, the light signal blue on the desk (courses, readouts, buttons) |
 | Checkered | black and white | Only at the start/finish line |
 
 ## Accessibility

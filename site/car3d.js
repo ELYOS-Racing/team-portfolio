@@ -22,7 +22,7 @@ export async function mount(root, motion) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
-  scene.add(new THREE.HemisphereLight(0xdbe8ff, 0x08202f, 0.5));
+  scene.add(new THREE.HemisphereLight(0xdbe8ff, 0x1d3c5c, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 1.6);
   key.position.set(4, 8, 5);
   scene.add(key);
@@ -39,7 +39,7 @@ export async function mount(root, motion) {
   const car = gltf.scene;
   const glass = new THREE.MeshPhysicalMaterial({ color: "#cfe0ff", roughness: 0.12, metalness: 0, transparent: true,
     opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
-  const outline = new THREE.LineBasicMaterial({ color: "#5e97ff", transparent: true, opacity: 0.55 });
+  const outline = new THREE.LineBasicMaterial({ color: "#9cc0ff", transparent: true, opacity: 0.7 });
   // everything inside in one brushed-silver material: the CAD colours (red and blue rims…) fight the x-ray look
   const metal = new THREE.MeshStandardMaterial({ color: "#c3cfda", metalness: 0.55, roughness: 0.38, envMapIntensity: 0.9 });
   car.traverse((o) => {
@@ -66,7 +66,7 @@ export async function mount(root, motion) {
   // soft contact shadow
   const sc = document.createElement("canvas"); sc.width = sc.height = 128;
   const g = sc.getContext("2d"), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  grd.addColorStop(0, "rgba(0,0,0,0.55)"); grd.addColorStop(1, "rgba(0,0,0,0)");
+  grd.addColorStop(0, "rgba(0,10,25,0.45)"); grd.addColorStop(1, "rgba(0,10,25,0)");
   g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
@@ -76,12 +76,12 @@ export async function mount(root, motion) {
   scene.add(shadow);
 
   // floor grid in the scene itself, so it turns with the camera; fog fades it into the background
-  const grid = new THREE.GridHelper(Math.max(12, length * 5), Math.round(Math.max(12, length * 5) / 0.25), 0x5e97ff, 0x24506b);
+  const grid = new THREE.GridHelper(Math.max(12, length * 5), Math.round(Math.max(12, length * 5) / 0.25), 0x9cc0ff, 0x3d6a96);
   grid.material.transparent = true;
   grid.material.opacity = 0.55;
   grid.material.depthWrite = false;
   scene.add(grid);
-  scene.fog = new THREE.Fog(0x0a2536, length * 2.2, length * 5.5);
+  scene.fog = new THREE.Fog(0x1d3c5c, length * 2.2, length * 5.5);
 
   // camera framed on the bounding sphere, three-quarter view from the front
   const longX = size.x >= size.z;                 // which horizontal axis runs nose to tail

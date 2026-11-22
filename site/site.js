@@ -266,6 +266,13 @@
     links.forEach((_, el) => io.observe(el));
   }
 
+  // ------------------------------------------------------------ divider tabs: keep the open one in view on narrow screens
+  const tabCur = document.querySelector(".sheet-tabs [aria-current]");
+  if (tabCur) {
+    const strip = tabCur.closest("ol");
+    strip.scrollLeft = tabCur.offsetLeft - (strip.clientWidth - tabCur.offsetWidth) / 2;
+  }
+
   // ------------------------------------------------------------ 3D car, loaded only when it is near
   const viewer = document.querySelector("[data-car3d]");
   if (viewer) {

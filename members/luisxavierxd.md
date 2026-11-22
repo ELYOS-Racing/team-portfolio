@@ -3,8 +3,18 @@
 | Field | Value |
 |---|---|
 | GitHub | [luisxavierxd](https://github.com/luisxavierxd) |
+| LinkedIn | [luisxaviergpa](https://www.linkedin.com/in/luisxaviergpa/) |
 | Seasons on the team | 2026–2027 (joined in August 2026) |
 | Area | Motor control, telemetry, Autonomous Driving Challenge |
+
+## Measured results
+
+| Metric | Before | After | Unit |
+|---|---|---|---|
+| FOC control-loop compute time | 68 | 5.4 | µs |
+| FOC control-loop jitter | 27 | 0.6 | µs |
+| Team repositories with continuous integration | | 13 | |
+| ADC software pipeline (safety, localization, perception, planning, control) running in software-in-the-loop and on both onboard Jetson Orin computers; car hardware tests pending | | Functional | |
 
 ## Season 2027 · lead, motor control and Autonomous Driving Challenge
 

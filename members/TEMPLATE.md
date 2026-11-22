@@ -5,10 +5,20 @@
 | Field | Value |
 |---|---|
 | GitHub | [username](https://github.com/username) |
-| LinkedIn | (optional) |
+| LinkedIn | (optional: full URL, https://www.linkedin.com/in/your-handle) |
 | Degree | |
 | Semesters on the team | YYYY-S to YYYY-S |
 | Area | Firmware · Electronics · Mechanical · ADC · Ops |
+| Initials | (optional: shown in your monogram; by default the first letters of your first two names) |
+
+## Measured results
+
+Optional. Each row becomes a figure on your page: a before/after bar with the improvement, a single big number if you leave Before empty, or a short milestone word (for example "Functional") with its caption. Only numbers you measured or can point to.
+
+| Metric | Before | After | Unit |
+|---|---|---|---|
+| FOC control-loop jitter | 27 | 0.6 | µs |
+| Boards brought up | | 3 | |
 
 ## Season YYYY · role
 
