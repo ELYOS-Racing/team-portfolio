@@ -106,12 +106,14 @@ main { display: block; }
 /* ---------------------------------------------------------------- hero: the course is the stage */
 .hero {
   position: relative; isolation: isolate; overflow: hidden;
-  background: radial-gradient(60rem 36rem at 70% 60%, rgb(156 192 255 / 0.12), transparent 70%);
+  background:
+    radial-gradient(52rem 34rem at 74% 42%, rgb(70 125 190 / 0.5), transparent 72%),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(4 14 28 / 0.55) 100%),
+    linear-gradient(180deg, #0d243b 0%, #142f4c 100%);
   border-bottom: 1px solid var(--line);
 }
 /* engineering grid, faded out toward the edges */
 .hero::before {
-  display: none;  /* the page itself carries the blueprint grid */
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 56px 56px; opacity: 0.45;
@@ -137,12 +139,12 @@ main { display: block; }
 
 @media (min-width: 961px) {
   /* Wide courses (Indianapolis): two columns that never overlap: the copy on the left; on the right the
-     course with a two-row readout and the pause button beside it. Spacing, headline and course scale with
-     the window height too, so the whole hero and its frame fit on short laptop screens. */
+     course, with the three-row readout and a compact pause button under it. Spacing, headline and course
+     scale with the window height too, so the whole hero and its frame fit on short laptop screens. */
   .hero--wide .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr) auto;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) auto;
     grid-template-areas: "copy track track" "copy hud toggle";
-    grid-template-rows: auto auto; column-gap: clamp(2rem, 4vw, 4rem); row-gap: clamp(0.75rem, 2svh, 1.25rem);
+    grid-template-rows: auto auto; column-gap: clamp(1rem, 3vw, 3.5rem); row-gap: clamp(0.75rem, 2svh, 1.25rem);
     align-content: center; padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
   }
   .hero--wide .hero-copy { grid-area: copy; align-self: start; }
@@ -150,13 +152,10 @@ main { display: block; }
   .hero--wide .hero-copy .lede { margin-top: clamp(0.75rem, 2.2svh, 1.2rem); }
   .hero--wide .cta { margin-top: clamp(1.1rem, 3.4svh, 2rem); }
   .hero--wide .hero-track { grid-area: track; align-self: start; }
-  .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(34svh, 20rem); }
-  .hero--wide .hud { grid-area: hud; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .hero--wide .hud-meter { grid-column: auto; }
-  .hero--wide .hud-cell { padding: 0.65rem 0.8rem; }
-  .hero--wide .hud .v { font-size: clamp(1.05rem, 1.5vw, 1.4rem); }
-  .hero--wide .motion-toggle { grid-area: toggle; align-self: stretch; justify-self: stretch; border-radius: var(--radius);
-    flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0 1rem; font-size: 0.8rem; }
+  .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(36svh, 22rem); }
+  .hero--wide .hud { grid-area: hud; }
+  .hero--wide .hud-cell { padding: 0.6rem 0.9rem; }
+  .hero--wide .motion-toggle { grid-area: toggle; align-self: end; justify-self: start; }
 
   /* Compact courses (Silesia Ring): copy, then the readout with the pause button beside it, on the left;
      the course on the right. Sized by the window height as well, so it fits short laptop screens. */
@@ -171,8 +170,7 @@ main { display: block; }
   .hero--square .hero-svg { max-height: min(62svh, 36rem); }
   .hero--square .hud { max-width: none; margin-top: 0; }
   .hero--square .hud-cell { padding: 0.65rem 0.85rem; }
-  .hero--square .motion-toggle { grid-area: toggle; align-self: stretch; justify-self: stretch; border-radius: var(--radius);
-    flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0 1rem; font-size: 0.8rem; }
+  .hero--square .motion-toggle { grid-area: toggle; align-self: end; justify-self: start; }
 }
 
 /* buttons */
@@ -196,6 +194,8 @@ main { display: block; }
 .track .startline rect.w { fill: #fff; }
 .track .origin { fill: var(--text); stroke: var(--bg); stroke-width: calc(var(--u) * 2.5); }
 .track .trail { stroke: var(--signal-hi); stroke-width: calc(var(--u) * 6); stroke-dasharray: 0 1000; opacity: 0; }
+.hero .track .trail { stroke: #fff; stroke-width: calc(var(--u) * 8); filter: drop-shadow(0 0 calc(var(--u) * 8px) rgb(196 217 255 / 0.95)); }
+.hero .track .car .halo { opacity: 0.45; filter: drop-shadow(0 0 calc(var(--u) * 10px) rgb(156 192 255 / 0.9)); }
 .track .car { opacity: 0; }
 .track .car .dot { fill: #fff; }
 .track .car .halo { fill: var(--signal); opacity: 0.28; }
@@ -210,7 +210,7 @@ main { display: block; }
 @media (max-width: 640px) { .hero .anno { display: none; } }
 
 /* the hero as a drawing: a thin frame with zone marks */
-.hero-frame { position: absolute; inset: 18px max(10px, calc((100% - var(--wrap)) / 2 + 6px)); border: 1px solid rgb(255 255 255 / 0.18); pointer-events: none; }
+.hero-frame { position: absolute; inset: 18px max(10px, calc((100% - var(--wrap)) / 2 + 6px)); border: 1px solid rgb(255 255 255 / 0.26); pointer-events: none; }
 .hero-frame .zones { color: rgb(255 255 255 / 0.45); }
 .hero-frame .zones-x { left: 0; right: 0; top: 4px; }
 .hero-frame .zones-y { top: 0; bottom: 0; left: 5px; }
@@ -225,8 +225,8 @@ main { display: block; }
 
 /* Entrance, gated by html.is-ready (fonts in, set by site.js) so nothing shows in a fallback position.
    The faint base outline is there from the first paint: the course never pops in. */
-.hero .track .lap { stroke: #e1ecff; stroke-width: calc(var(--u) * 5.5); filter: drop-shadow(0 0 calc(var(--u) * 7px) rgb(156 192 255 / 0.85)); }
-.hero .track .lap-base { stroke: #9cc0ff; stroke-opacity: 0.22; stroke-width: calc(var(--u) * 22); }
+.hero .track .lap { stroke: #eef4ff; stroke-width: calc(var(--u) * 6); filter: drop-shadow(0 0 calc(var(--u) * 9px) rgb(120 170 255 / 0.95)); }
+.hero .track .lap-base { stroke: #7fb0ff; stroke-opacity: 0.26; stroke-width: calc(var(--u) * 26); }
 .js .hero .lap { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
 .js .hero .startline, .js .hero .origin { opacity: 0; }
 .js.is-ready .hero .lap { animation: draw 1.8s var(--ease-in-out) 0.25s forwards; }
@@ -248,7 +248,7 @@ main { display: block; }
   background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
-.hud-cell { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.8rem 1rem; background: rgb(29 60 92 / 0.92); }
+.hud-cell { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.8rem 1rem; background: rgb(11 30 50 / 0.82); }
 .hud-meter { grid-column: 1 / -1; }
 .hud .k { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .hud .v { font-stretch: 112%; font-weight: 750; font-size: clamp(1.25rem, 2vw, 1.6rem); line-height: 1.1; color: var(--text); white-space: nowrap; }

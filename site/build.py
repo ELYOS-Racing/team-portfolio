@@ -276,8 +276,8 @@ def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = Fa
     live_bits = ""
     if live:
         live_bits = (f'<path class="trail" d="{t["d"]}" pathLength="1000"/>'
-                     f'<g class="car" transform="translate({sx} {sy}) rotate({ang:.1f})"><circle class="halo" r="{16 * u:.1f}"/>'
-                     f'<path class="dot" d="M{10 * u:.1f},0 L{-7 * u:.1f},{-7 * u:.1f} L{-3 * u:.1f},0 L{-7 * u:.1f},{7 * u:.1f} Z"/></g>')
+                     f'<g class="car" transform="translate({sx} {sy}) rotate({ang:.1f})"><circle class="halo" r="{24 * u:.1f}"/>'
+                     f'<path class="dot" d="M{14 * u:.1f},0 L{-10 * u:.1f},{-10 * u:.1f} L{-4 * u:.1f},0 L{-10 * u:.1f},{10 * u:.1f} Z"/></g>')
     return f"""<svg class="track {cls}" viewBox="{t['viewBox']}" style="--u:{u:.3f}" role="img" aria-label="{esc(label)}" preserveAspectRatio="xMidYMid meet">
 <path class="lap-base" d="{t['d']}"/>
 <path class="lap" d="{t['d']}" pathLength="1000"/>
