@@ -30,8 +30,8 @@ programs:
     track: silesia
     circuit: Silesia Ring, Poland
     summary: >-
-      A removable autonomy kit on a previous Elyos car: it drives the course on its own, with a
-      safety driver on board, as efficiently as it can.
+      A removable autonomy kit on our newest car, the one that raced at Indianapolis in 2026: it drives
+      the course on its own, with a safety driver on board, as efficiently as it can.
     facts:
       - [Attempt, "One run, start to finish line"]
       - [Course, "1.30 km on the Silesia Ring"]

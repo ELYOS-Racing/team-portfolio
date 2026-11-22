@@ -26,6 +26,9 @@ OUT = ROOT / "_site"
 REPO = "https://github.com/ELYOS-Racing/team-portfolio"
 BASE_URL = "https://elyos-racing.github.io/team-portfolio/"
 FONTS = "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap"
+THREE = "https://unpkg.com/three@0.170.0"
+IMPORTMAP = (f'<script type="importmap">{{"imports":{{"three":"{THREE}/build/three.module.js",'
+             f'"three/addons/":"{THREE}/examples/jsm/"}}}}</script>')
 README_START, README_END = "<!-- results:start -->", "<!-- results:end -->"
 
 esc = html.escape
@@ -33,7 +36,7 @@ esc = html.escape
 
 # ------------------------------------------------------------------ layout
 
-def page(title: str, body: str, depth: int, description: str = "", current: str = "") -> str:
+def page(title: str, body: str, depth: int, description: str = "", current: str = "", hero3d: bool = False) -> str:
     up = "../" * depth
     full_title = f"{title} | Elyos Racing Team" if title else "Elyos Racing Team"
     desc = esc(description or "Elyos Racing Team: ultra-efficient electric prototypes for the Shell Eco-marathon, "
@@ -54,6 +57,7 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#08202f">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="{up}assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,19 +65,22 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <link rel="stylesheet" href="{FONTS}">
 <link rel="stylesheet" href="{up}style.css">
 <script>document.documentElement.classList.add("js")</script>
+{IMPORTMAP if hero3d else ""}
 </head>
 <body>
+<a class="skip" href="#content">Skip to content</a>
 <header class="bar">
 <a class="brand" href="{up}index.html"><img src="{up}assets/logo-on-dark.png" alt="Elyos Racing Team" width="132" height="44"></a>
-<nav>{nav("mileage.html", "Mileage", "mileage")}{nav("adc.html", "Autonomous", "adc")}{nav("members/index.html", "Members", "members")}</nav>
+<nav aria-label="Main">{nav("mileage.html", "Mileage", "mileage")}{nav("adc.html", "Autonomous", "adc")}{nav("members/index.html", "Members", "members")}</nav>
 </header>
-<main>
+<main id="content" tabindex="-1">
 {body}
 </main>
 <footer>
 <p>Content © 2026 Luis Xavier García Pimentel Ascencio and Elyos Racing Team, <a href="{REPO}/blob/main/LICENSE.md">PolyForm Strict 1.0.0</a>. Member pages belong to each member. <a href="{REPO}">Source on GitHub</a>.</p>
 </footer>
 <script src="{up}site.js" defer></script>
+{f'<script type="module" src="{up}hero3d.js"></script>' if hero3d else ""}
 </body>
 </html>
 """
@@ -126,6 +133,19 @@ def track_svg(tracks: dict, key: str, label: str, cls: str = "") -> str:
 {start_dot}</svg>"""
 
 
+def hero3d(tracks: dict, key: str, copy_html: str, label: str, alt: str) -> str:
+    """Sticky 3D stage; until WebGL is ready (or without it) the static course outline shows instead."""
+    return f"""<section class="hero3d" data-hero3d data-track="{key}" data-base="" aria-labelledby="hero-title">
+<div class="stage">
+<canvas aria-hidden="true"></canvas>
+<div class="fallback">{track_svg(tracks, key, label, "hero-track")}</div>
+<div class="overlay">{copy_html}<p class="readout" aria-hidden="true"></p></div>
+<button class="motion-toggle" type="button" aria-pressed="false">Pause motion</button>
+<p class="sr-only">{esc(alt)}</p>
+</div>
+</section>"""
+
+
 def results_list(data: dict, up: str = "") -> str:
     best = max(r.get("km_per_kwh", 0) for r in data["results"])
     rows = []
@@ -168,13 +188,14 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
 {track_svg(tracks, p['track'], f"{p['circuit']} course outline", "small")}
 <h3>{esc(p['name'])}</h3><p class="circuit">{esc(p['circuit'])}</p><p>{esc(p['summary'])}</p></a>"""
                     for key, p in progs.items())
-    body = f"""<section class="hero">
-<div class="hero-copy">
-<h1>One kilowatt-hour, {laps:.0f} laps.</h1>
-<p class="lede">{h['km_per_kwh']} km on the energy of a single kilowatt-hour: {laps:.0f} laps of Indianapolis Motor Speedway, {esc(h['event'])}.</p>
-</div>
-{track_svg(tracks, progs['mileage']['track'], "Outline of the Mileage Challenge course at Indianapolis Motor Speedway", "hero-track")}
-</section>
+    copy = (f'<h1 id="hero-title">One kilowatt-hour, {laps:.0f} laps.</h1>'
+            f'<p class="lede">{h["km_per_kwh"]} km on the energy of a single kilowatt-hour: {laps:.0f} laps of '
+            f'Indianapolis Motor Speedway, {esc(h["event"])}.</p>')
+    body = f"""{hero3d(tracks, progs['mileage']['track'], copy,
+                     "Outline of the Mileage Challenge course at Indianapolis Motor Speedway",
+                     "Animation: a 3D model of our 2026 car, shown in x-ray so the chassis, steering and wheels are "
+                     "visible, parked on the start line at Indianapolis Motor Speedway. Scrolling turns around the car "
+                     "and then follows it for one lap of the course.")}
 <section class="intro"><p>{esc(data['tagline'])}</p></section>
 <section class="split" aria-label="Competitions">{split}</section>
 <section id="results"><h2>Results</h2>{results_list(data)}
@@ -182,7 +203,7 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
 <section id="members"><h2>Members</h2>{members_list(members)}
 <p class="note">Pages are opt-in: each member publishes their own with a pull request from the <a href="{REPO}/blob/main/members/TEMPLATE.md">template</a>.</p></section>
 <section class="sources"><h2>Sources</h2><ul>{"".join(f'<li><a href="{s["url"]}">{esc(s["label"])}</a></li>' for s in data["sources"])}</ul></section>"""
-    return page("", body, 0, data["tagline"])
+    return page("", body, 0, data["tagline"], hero3d=True)
 
 
 def program_page(key: str, data: dict, tracks: dict) -> str:
@@ -197,14 +218,17 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         # drop the first paragraph of adc.md: it repeats the program summary shown in the hero
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
         extra = f'<section class="doc">{md_to_html(rest)}</section>'
-    body = f"""<section class="program-hero">
-<div><h1>{esc(p['name'])}</h1><p class="circuit">{esc(p['circuit'])}</p><p class="lede">{esc(p['summary'])}</p>{facts(p)}</div>
-{track_svg(tracks, p['track'], f"{p['circuit']} course outline, {t['length_m']:,.0f} m", "program-track")}
-</section>
+    copy = (f'<h1 id="hero-title">{esc(p["name"])}</h1><p class="circuit">{esc(p["circuit"])}</p>'
+            f'<p class="lede">{esc(p["summary"])}</p>')
+    course = f"{p['circuit']} course outline, {t['length_m']:,.0f} m"
+    alt = (f"Animation: a 3D model of our 2026 car, shown in x-ray, on the {p['circuit']} course. Scrolling turns "
+           f"around the car and then follows it along the course.")
+    body = f"""{hero3d(tracks, p['track'], copy, course, alt)}
+<section class="facts-band"><h2 class="sr-only">Key facts</h2>{facts(p)}</section>
 <section><h2>What we build</h2>{project_list(data, p['projects'])}</section>
 {extra}
 <p class="fine">Course outline from the official coordinates of the Shell Eco-marathon Data and Telemetry Portal.</p>"""
-    return page(p["name"], body, 0, p["summary"], current=key)
+    return page(p["name"], body, 0, p["summary"], current=key, hero3d=True)
 
 
 def member_page(slug: str, text: str) -> tuple[str, dict]:
@@ -268,7 +292,7 @@ def build() -> None:
     OUT.mkdir(exist_ok=True)
     for child in OUT.iterdir():  # empty it in place (a local preview server may hold the folder open)
         shutil.rmtree(child) if child.is_dir() else child.unlink()
-    for f in ("style.css", "site.js"):
+    for f in ("style.css", "site.js", "hero3d.js", "tracks.json"):
         shutil.copy(SITE / f, OUT / f)
     shutil.copytree(SITE / "assets", OUT / "assets")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")

@@ -1,6 +1,6 @@
 # Autonomous Driving Challenge (ADC)
 
-A removable autonomy kit built on a previous Elyos car, for Shell Eco-marathon's **Autonomous Driving Challenge**.
+A removable autonomy kit built on the team's newest car, the prototype that raced at Shell Eco-marathon United States 2026, for Shell Eco-marathon's **Autonomous Driving Challenge**.
 
 | Aspect | Detail |
 |---|---|
