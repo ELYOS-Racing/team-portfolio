@@ -26,8 +26,9 @@ Links have no `.html`: GitHub Pages serves `/mileage` from `mileage.html` and `/
 
 The course outline is the hero on the home, Mileage and ADC pages. Its faint base line is there from the first paint (the stage has a fixed aspect ratio, so nothing shifts), the bright line draws itself once the font is in, and then a dot runs the course with a speed profile derived from the curvature of the official coordinates (lateral grip limit, smoothed). The readout shows status, lap, speed, distance and energy:
 
-- **Mileage** (closed course): a time-lapse, the first lap at a readable pace and each one faster, until the kilowatt-hour runs out after 88 laps and 336 km; then it holds and starts again.
-- **ADC** (open course): one autonomous run from the start dot to the checkered finish line.
+- **Home** (closed course): a time-lapse, the first lap at a readable pace and each one faster, until the kilowatt-hour runs out after 88 laps and 336 km, with the efficiency beside the energy left; then it holds and starts again.
+- **Mileage** (closed course): the race itself, 4 laps and 15.33 km as a steady time-lapse, with the race time against the 35-minute limit and the energy used (about 46 Wh at 336 km/kWh). The copy and the readout share the top row and the course takes the full width below.
+- **ADC** (open course): one autonomous run from the start dot to the checkered finish line, which sits across the last stretch.
 
 Once the outline has drawn itself, drafting marks appear around it, computed from the outline so they fit any course (`track_annotations()` in `build.py`): start/finish labels, the running direction, a length callout (the official 3,833 m lap at Indianapolis), a north arrow and a metre scale bar in the freest spot, and a handwritten note ("≈ 11 Wh a lap", "no hands from here"). The hero sits in a thin drawing frame with zone marks, and a hand-drawn swash underlines "88 laps.". Marks that would leave the drawing switch to the inner side of the track; they are hidden on phones.
 

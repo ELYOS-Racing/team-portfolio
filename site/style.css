@@ -169,6 +169,19 @@ main { display: block; }
   .hero--square .hero-svg { max-height: min(62svh, 36rem); }
   .hero--square .hud { max-width: none; margin-top: 0; }
   .hero--square .hud-cell { padding: 0.65rem 0.85rem; }
+
+  /* The race (Mileage page): copy and readout side by side on top, the wide course across the whole drawing below. */
+  .hero--race .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "copy hud" "track track";
+    grid-template-rows: auto auto; align-content: center; column-gap: clamp(1.5rem, 4vw, 4rem); row-gap: clamp(0.5rem, 2svh, 1.25rem);
+    padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
+  }
+  .hero--race .hero-copy { align-self: end; }
+  .hero--race .hero-copy h1 { font-size: clamp(2.3rem, min(4.4vw, 7svh), 4rem); }
+  .hero--race .hero-copy .lede { margin-top: clamp(0.75rem, 2.2svh, 1.2rem); }
+  .hero--race .hud { align-self: end; }
+  .hero--race .hud-cell { padding: 0.6rem 0.9rem; }
+  .hero--race .hero-svg { max-height: min(42svh, 28rem); }
 }
 
 /* buttons */
