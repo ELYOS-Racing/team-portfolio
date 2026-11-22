@@ -615,7 +615,7 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         mode = {"mode": "laps", "laps": race_laps, "length-m": t["length_m"], "vmax": 32, "total-km": race_km,
                 "lap-m": int(h["lap_km"] * 1000 + 0.5), "lap-s": 6.5, "limit-s": 35 * 60, "wh": f"{wh:.1f}",
                 "wh-lap": f"{wh / race_laps:.1f}",
-                "finish": f"{race_laps} laps, {race_km} km on {wh:.0f} Wh: {h['km_per_kwh']} km/kWh."}
+                "finish": f"Done: {race_km} km on {wh:.0f} Wh."}
         alt = (f"Animation: the outline of {p['circuit']} draws itself and a car marker runs the {race_laps}-lap, "
                f"{race_km} km attempt as a time-lapse while a readout counts laps, speed, distance, race time against "
                f"the 35-minute limit and the energy used, about {wh:.0f} Wh. Use the Pause motion button to stop it.")
