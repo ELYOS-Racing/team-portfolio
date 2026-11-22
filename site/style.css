@@ -136,29 +136,43 @@ main { display: block; }
 .hero-svg { width: 100%; height: auto; max-height: 46svh; overflow: visible; }
 
 @media (min-width: 961px) {
-  /* Wide courses (Indianapolis): two balanced columns that never overlap: the copy on the left; on the
-     right the course with the readout and the pause button under it. */
+  /* Wide courses (Indianapolis): two columns that never overlap: the copy on the left; on the right the
+     course with a two-row readout and the pause button beside it. Spacing, headline and course scale with
+     the window height too, so the whole hero and its frame fit on short laptop screens. */
   .hero--wide .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    grid-template-areas: "copy track" "copy hud" "copy toggle";
-    grid-template-rows: auto auto auto; column-gap: clamp(2.5rem, 5vw, 4.5rem); row-gap: 1rem; align-content: center;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr) auto;
+    grid-template-areas: "copy track track" "copy hud toggle";
+    grid-template-rows: auto auto; column-gap: clamp(2rem, 4vw, 4rem); row-gap: clamp(0.75rem, 2svh, 1.25rem);
+    align-content: center; padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
   }
-  .hero--wide .hero-copy { grid-area: copy; align-self: center; }
-  .hero--wide .hero-copy h1 { max-width: none; font-size: clamp(2.6rem, 4vw, 4.1rem); }
-  .hero--wide .hero-track { grid-area: track; align-self: end; }
-  .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(36svh, 20rem); }
-  .hero--wide .hud { grid-area: hud; }
-  .hero--wide .motion-toggle { grid-area: toggle; justify-self: end; align-self: start; }
+  .hero--wide .hero-copy { grid-area: copy; align-self: start; }
+  .hero--wide .hero-copy h1 { max-width: none; font-size: clamp(2.3rem, min(4vw, 7.4svh), 4.1rem); }
+  .hero--wide .hero-copy .lede { margin-top: clamp(0.75rem, 2.2svh, 1.2rem); }
+  .hero--wide .cta { margin-top: clamp(1.1rem, 3.4svh, 2rem); }
+  .hero--wide .hero-track { grid-area: track; align-self: start; }
+  .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(34svh, 20rem); }
+  .hero--wide .hud { grid-area: hud; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hero--wide .hud-meter { grid-column: auto; }
+  .hero--wide .hud-cell { padding: 0.65rem 0.8rem; }
+  .hero--wide .hud .v { font-size: clamp(1.05rem, 1.5vw, 1.4rem); }
+  .hero--wide .motion-toggle { grid-area: toggle; align-self: stretch; justify-self: stretch; border-radius: var(--radius);
+    flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0 1rem; font-size: 0.8rem; }
 
-  /* Compact courses (Silesia Ring): copy and readout on the left, the course on the right. */
+  /* Compact courses (Silesia Ring): copy, then the readout with the pause button beside it, on the left;
+     the course on the right. Sized by the window height as well, so it fits short laptop screens. */
   .hero--square .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "copy track" "hud track" "toggle track";
-    grid-template-rows: auto auto 1fr; align-content: center;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "copy copy track" "hud toggle track";
+    grid-template-rows: auto auto; align-content: center; column-gap: clamp(1rem, 3vw, 3rem); row-gap: clamp(1rem, 3svh, 1.75rem);
+    padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
   }
-  .hero--square .hero-copy h1 { font-size: clamp(2.6rem, 4.4vw, 4rem); }
-  .hero--square .hero-svg { max-height: min(70svh, 40rem); }
-  .hero--square .hud { max-width: 30rem; margin-top: 0.5rem; }
-  .hero--square .motion-toggle { justify-self: start; align-self: start; }
+  .hero--square .hero-copy h1 { font-size: clamp(2.3rem, min(4.4vw, 7svh), 4rem); }
+  .hero--square .hero-copy .lede { margin-top: clamp(0.75rem, 2.2svh, 1.2rem); }
+  .hero--square .hero-track { align-self: center; }
+  .hero--square .hero-svg { max-height: min(62svh, 36rem); }
+  .hero--square .hud { max-width: none; margin-top: 0; }
+  .hero--square .hud-cell { padding: 0.65rem 0.85rem; }
+  .hero--square .motion-toggle { grid-area: toggle; align-self: stretch; justify-self: stretch; border-radius: var(--radius);
+    flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0 1rem; font-size: 0.8rem; }
 }
 
 /* buttons */
@@ -211,6 +225,8 @@ main { display: block; }
 
 /* Entrance, gated by html.is-ready (fonts in, set by site.js) so nothing shows in a fallback position.
    The faint base outline is there from the first paint: the course never pops in. */
+.hero .track .lap { stroke: #e1ecff; stroke-width: calc(var(--u) * 5.5); filter: drop-shadow(0 0 calc(var(--u) * 7px) rgb(156 192 255 / 0.85)); }
+.hero .track .lap-base { stroke: #9cc0ff; stroke-opacity: 0.22; stroke-width: calc(var(--u) * 22); }
 .js .hero .lap { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
 .js .hero .startline, .js .hero .origin { opacity: 0; }
 .js.is-ready .hero .lap { animation: draw 1.8s var(--ease-in-out) 0.25s forwards; }
