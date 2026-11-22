@@ -194,8 +194,8 @@ def index(data: dict, tracks: dict, members: list[dict]) -> str:
     body = f"""{hero3d(tracks, progs['mileage']['track'], copy,
                      "Outline of the Mileage Challenge course at Indianapolis Motor Speedway",
                      "Animation: a 3D model of our 2026 car, shown in x-ray so the chassis, steering and wheels are "
-                     "visible, parked on the start line at Indianapolis Motor Speedway. Scrolling turns around the car "
-                     "and then follows it for one lap of the course.")}
+                     "visible, parked on the start line at Indianapolis Motor Speedway. The camera turns around the car "
+                     "and then follows it lap after lap. Use the Pause motion button to stop it.")}
 <section class="intro"><p>{esc(data['tagline'])}</p></section>
 <section class="split" aria-label="Competitions">{split}</section>
 <section id="results"><h2>Results</h2>{results_list(data)}
@@ -221,8 +221,8 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
     copy = (f'<h1 id="hero-title">{esc(p["name"])}</h1><p class="circuit">{esc(p["circuit"])}</p>'
             f'<p class="lede">{esc(p["summary"])}</p>')
     course = f"{p['circuit']} course outline, {t['length_m']:,.0f} m"
-    alt = (f"Animation: a 3D model of our 2026 car, shown in x-ray, on the {p['circuit']} course. Scrolling turns "
-           f"around the car and then follows it along the course.")
+    alt = (f"Animation: a 3D model of our 2026 car, shown in x-ray, on the {p['circuit']} course. The camera turns "
+           f"around the car and then follows it to the finish line. Use the Pause motion button to stop it.")
     body = f"""{hero3d(tracks, p['track'], copy, course, alt)}
 <section class="facts-band"><h2 class="sr-only">Key facts</h2>{facts(p)}</section>
 <section><h2>What we build</h2>{project_list(data, p['projects'])}</section>

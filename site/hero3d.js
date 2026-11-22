@@ -99,11 +99,13 @@ async function start() {
     const x = c.getContext("2d");
     for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { x.fillStyle = (i + j) % 2 ? "#ffffff" : "#000000"; x.fillRect(i * 16, j * 16, 16, 16); }
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, 0.6), new THREE.MeshBasicMaterial({ map: tex }));
-    m.rotation.x = -Math.PI / 2;
-    m.rotation.z = Math.atan2(dir.x, dir.z) + Math.PI / 2;
-    m.position.copy(at).setY(at.y + 0.04);
-    scene.add(m);
+    const strip = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, 0.6), new THREE.MeshBasicMaterial({ map: tex }));
+    strip.rotation.x = -Math.PI / 2;           // long side along local X = across the track
+    const g = new THREE.Group();
+    g.add(strip);
+    g.rotation.y = Math.atan2(dir.x, dir.z);   // same yaw as a car heading along the course
+    g.position.copy(at).setY(at.y + 0.04);
+    scene.add(g);
   }
   const startS = sample(0), endS = sample(1);
   checkered(closed ? startS.pos : endS.pos, closed ? startS.dir : endS.dir);
@@ -139,14 +141,6 @@ async function start() {
   reduce.addEventListener("change", () => { paused = reduce.matches; syncBtn(); kick(); });
   const readout = root.querySelector(".readout");
 
-  const forced = new URLSearchParams(location.search).get("hero");  // ?hero=0.5 pins the scroll progress (QA)
-  function progress() {
-    if (forced !== null) return Math.min(Math.max(parseFloat(forced) || 0, 0), 1);
-    const r = root.getBoundingClientRect();
-    const span = Math.max(root.offsetHeight - window.innerHeight, 1);
-    return Math.min(Math.max(-r.top / span, 0), 1);
-  }
-
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) {
@@ -155,49 +149,66 @@ async function start() {
     }
   }
 
-  const ORBIT_END = 0.22, BLEND_END = 0.32;
-  let idle = 0, last = performance.now(), visible = true, raf = 0;
+  // Timeline (seconds): orbit around the parked car, glide behind it, then a lap compressed to LAP_S
+  // with the curvature-limited speed profile; closed courses loop, open ones restart after the finish.
+  const ORBIT_S = 5, BLEND_S = 1.6, LAP_S = closed ? 45 : 24, HOLD_S = 2.5;
+  const CYCLE = closed ? null : ORBIT_S + BLEND_S + LAP_S + HOLD_S;
+  const qa = new URLSearchParams(location.search).get("t");  // ?t=20 freezes the timeline at 20 s (screenshots)
+  let clock = qa !== null ? parseFloat(qa) || 0 : 0;
+  let last = performance.now(), visible = true, raf = 0;
   const camPos = new THREE.Vector3(), look = new THREE.Vector3();
+  const smooth = (x) => x * x * (3 - 2 * x);
+
+  function pose(time) {
+    let tt = time;
+    if (CYCLE) tt %= CYCLE;
+    const orbitT = Math.min(tt, ORBIT_S + BLEND_S) / ORBIT_S;
+    let run = 0, lap = 1;
+    const driving = tt - ORBIT_S - BLEND_S;
+    if (driving > 0) {
+      const laps = driving / LAP_S;
+      if (closed) { lap = Math.floor(laps) % 4 + 1; run = laps % 1; } else run = Math.min(laps, 1);
+    }
+    const blend = smooth(Math.min(Math.max((tt - ORBIT_S) / BLEND_S, 0), 1));
+    return { orbitT, run, blend, lap };
+  }
 
   function frame(now) {
     raf = 0;
     resize();
     const dt = Math.min((now - last) / 1000, 0.1); last = now;
-    const p = paused && forced === null ? 0 : progress();
-    if (!paused && p === 0 && forced === null) idle += dt * 0.25;  // slow turntable while waiting at the top
-
-    const runFrac = p <= BLEND_END ? 0 : (p - BLEND_END) / (1 - BLEND_END);
-    const st = sample(runFrac);
+    if (!paused && qa === null) clock += dt;
+    const ps = pose(clock);
+    const st = sample(ps.run);
     holder.position.copy(st.pos);
     holder.rotation.y = Math.atan2(st.dir.x, st.dir.z);
 
-    // orbit camera around the parked car
-    const ang = 0.9 + idle + (Math.min(p, ORBIT_END) / ORBIT_END) * Math.PI * 1.15;
+    const ang = 0.9 + smooth(Math.min(ps.orbitT, 1)) * Math.PI * 1.1;
     const R = 5.2 * Math.max(1, 1.1 / camera.aspect);  // portrait screens: step back so the whole car fits
     const orbit = new THREE.Vector3(Math.sin(ang) * R, 1.9 * Math.min(R / 5.2, 1.6), Math.cos(ang) * R).add(st.pos);
-    // chase camera behind and above
     const chase = st.pos.clone().addScaledVector(st.dir, -9).setY(st.pos.y + 1.7);
-    const b = p <= ORBIT_END ? 0 : Math.min((p - ORBIT_END) / (BLEND_END - ORBIT_END), 1);
-    const e = b * b * (3 - 2 * b);
-    camPos.copy(orbit).lerp(chase, e);
-    look.copy(st.pos).setY(st.pos.y + 0.6).addScaledVector(st.dir, e * 18);
-    camera.position.copy(camPos);
+    camPos.copy(orbit).lerp(chase, ps.blend);
+    look.copy(st.pos).setY(st.pos.y + 0.6).addScaledVector(st.dir, ps.blend * 18);
+    // ease the camera so direction changes never snap
+    camera.position.lerp(camPos, clock < 0.05 || qa !== null ? 1 : Math.min(dt * 6, 1));
     camera.lookAt(look);
     renderer.render(scene, camera);
 
     if (readout) {
-      const d = Math.round(runFrac === 0 ? 0 : st.dist);
-      readout.textContent = closed
-        ? `Lap distance ${d.toLocaleString("en-US")} m of ${Math.round(L).toLocaleString("en-US")} m`
-        : `Distance ${d.toLocaleString("en-US")} m of ${Math.round(L).toLocaleString("en-US")} m`;
+      const d = Math.round(ps.run === 0 ? 0 : st.dist).toLocaleString("en-US");
+      const tot = Math.round(L).toLocaleString("en-US");
+      readout.textContent = closed ? `Lap ${ps.lap} of 4, ${d} m of ${tot} m` : `${d} m of ${tot} m`;
     }
-    if (visible && !paused && p === 0) kick();  // keep the turntable going only while idle at the top
+    if (visible && !paused && !document.hidden && qa === null) kick();
   }
-  function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+  function kick() { if (!raf) raf = requestAnimationFrame((t) => frame(t)); }
+  function wake() { last = performance.now(); kick(); }
 
-  window.addEventListener("scroll", kick, { passive: true });
   window.addEventListener("resize", kick);
-  new IntersectionObserver((es) => { visible = es[0].isIntersecting; if (visible) kick(); }).observe(root);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) wake(); });
+  new IntersectionObserver((es) => { visible = es[0].isIntersecting; if (visible) wake(); }).observe(root);
+  if (btn) btn.addEventListener("click", wake);
+  reduce.addEventListener("change", wake);
   root.classList.add("is-3d");
   kick();
 }
