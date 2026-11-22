@@ -660,9 +660,11 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sheet .eng-tag, .sheet .program-tag { font-family: var(--mono); font-size: 0.7rem; color: var(--pen); }
 .sheet .glyph g { stroke: var(--ink); }
 .sheet .glyph .g-acc { stroke: var(--pen); }
-.sheet .program-track { background: transparent; border: 1px dashed rgb(23 50 92 / 0.4); }
-.sheet .track .lap { stroke: var(--pen); }
-.sheet .track .lap-base { stroke: var(--pen); stroke-opacity: 0.14; }
+.sheet .program-track { background: rgb(23 50 92 / 0.045); border: 1px dashed rgb(23 50 92 / 0.45); }
+.sheet .track .lap { stroke: var(--ink); stroke-width: calc(var(--u) * 8); }
+.sheet .track .lap-base { stroke: var(--pen); stroke-opacity: 0.28; stroke-width: calc(var(--u) * 24); }
+.sheet .track .origin { fill: var(--pen); stroke: var(--paper); stroke-width: calc(var(--u) * 3.5); }
+.sheet .track .startline { filter: drop-shadow(0 0 1px var(--ink)); }
 .sheet .card .stretch:focus-visible::after, .sheet .member .stretch:focus-visible::after { outline-color: var(--pen); }
 
 .sheet .facts div { border-top: 1.5px solid var(--ink); }
