@@ -1,35 +1,36 @@
-# Elyos Racing Team · portafolio
+# Elyos Racing Team · portfolio
 
-Equipo estudiantil del **Tecnológico de Monterrey, campus Guadalajara**, que diseña y construye prototipos eléctricos de máxima eficiencia para el **Shell Eco-marathon** desde 2021, y desde 2026 un kit para el Autonomous Driving Challenge.
+Student team from **Tecnológico de Monterrey, Guadalajara campus**, designing and building ultra-efficient electric prototypes for the **Shell Eco-marathon** since 2021, and since 2026 a kit for the Autonomous Driving Challenge.
 
-## Resultados
+## Results
 
-| Temporada | Evento | Resultado |
+| Season | Event | Result |
 |---|---|---|
-| [2026](seasons/2026.md) | Shell Eco-marathon United States, Indianapolis | **6.º lugar**, Prototype Battery Electric · ~310 km/kWh |
-| [2025](seasons/2025.md) | Shell Eco-marathon Americas | **4.º lugar** |
-| [2024](seasons/2024.md) | Shell Eco-marathon Americas, Indianapolis | **4.º lugar continental** · auto más ligero de la competencia (30 kg) |
-| [2023](seasons/2023.md) | Shell Eco-marathon Brasil, Río de Janeiro | **6.º lugar** · 235 km/kWh, récord del auto mexicano más eficiente en la historia del evento |
-| [2023](seasons/2023.md) | Shell Eco-marathon Americas, Indianapolis | Debut · 2.º auto más ligero de América (31 kg) |
+| [2026](seasons/2026.md) | Shell Eco-marathon United States, Indianapolis | **6th place**, Prototype Battery Electric · ~310 km/kWh |
+| [2025](seasons/2025.md) | Shell Eco-marathon Americas | **4th place** |
+| [2024](seasons/2024.md) | Shell Eco-marathon Americas, Indianapolis | **4th place in the Americas** · lightest car of the competition (30 kg) |
+| [2023](seasons/2023.md) | Shell Eco-marathon Brazil, Rio de Janeiro | **6th place** · 235 km/kWh, most efficient Mexican car in Shell Eco-marathon history |
+| [2023](seasons/2023.md) | Shell Eco-marathon Americas, Indianapolis | Debut · 2nd lightest car in the Americas (31 kg) |
 
-## Qué construimos
+## What we build
 
-| Proyecto | Qué es |
+| Project | What it is |
 |---|---|
-| [Driver del motor](projects/driver.md) | Control vectorial (FOC) de un motor BLDC en un microcontrolador de 600 MHz |
-| [Telemetría](projects/telemetria.md) | Adquisición, fusión de sensores, registro y transmisión en vivo a pits; copiloto predictivo en desarrollo |
+| [Motor driver](projects/driver.md) | Field-oriented control (FOC) of a BLDC motor on a 600 MHz microcontroller |
+| [Telemetry](projects/telemetry.md) | Data acquisition, sensor fusion, logging and live transmission to the pits; predictive co-pilot in development |
+| [Autonomous Driving Challenge](projects/adc.md) | Removable autonomy kit (ROS 2, simulation, energy-aware planning) aiming at ADC Poland 2027 |
 
-## Integrantes
+## Members
 
-Cada integrante tiene su página en [`members/`](members/) con lo que hizo, temporada por temporada. Es **opt-in**: cada quien la crea con su propio PR a partir de la [plantilla](members/PLANTILLA.md).
+Each member has a page in [`members/`](members/) describing their work, season by season. It is **opt-in**: each person creates their own page with their own PR from the [template](members/TEMPLATE.md).
 
-El código de los vehículos es privado. Las contribuciones de cada integrante se reflejan en su perfil de GitHub como *private contributions*; este portafolio explica qué hay detrás.
+The vehicles' code is private. Each member's contributions show on their GitHub profile as *private contributions*; this portfolio explains what is behind them.
 
-## Fuentes
+## Sources
 
-- [Resultados oficiales SEM US 2026, Prototype Battery Electric](http://results.sem-app.com/app/sem_2026_us/P/BE)
+- [Official results, SEM US 2026, Prototype Battery Electric](http://results.sem-app.com/app/sem_2026_us/P/BE)
 - [elyosracingteam.com](https://www.elyosracingteam.com/shell-eco-marathon) (2023–2025)
 
-## Licencia
+## License
 
-[PolyForm Strict 1.0.0](LICENSE.md) © 2026 Luis Xavier García Pimentel Ascencio y Elyos Racing Team. Las páginas de `members/` son de cada integrante.
+[PolyForm Strict 1.0.0](LICENSE.md) © 2026 Luis Xavier García Pimentel Ascencio and Elyos Racing Team. Pages in `members/` belong to each member.
