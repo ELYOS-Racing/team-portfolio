@@ -20,8 +20,11 @@ Student team from **Tecnológico de Monterrey, Guadalajara campus**, designing a
 
 | Project | What it is |
 |---|---|
+| [Mechanics](projects/mechanics.md) | Three-wheeled 30 kg layout, partial-Ackermann steering, hydraulic brakes; a 500 W chain drive with clutch for 2027 |
+| [Electronics](projects/electronics.md) | Our own 48 V motor-driver and telemetry boards in KiCad, with design-rule checks on every change |
 | [Motor driver](projects/driver.md) | Field-oriented control (FOC) of a BLDC motor on a 600 MHz microcontroller |
 | [Telemetry](projects/telemetry.md) | Data acquisition, sensor fusion, logging and live transmission to the pits; predictive co-pilot in development |
+| [Energy strategy](projects/strategy.md) | Metre-by-metre model of car and track: speed profile, pulse and glide, and where every watt goes |
 | [Autonomous Driving Challenge](projects/adc.md) | Removable autonomy kit (ROS 2, simulation, energy-aware planning) aiming at ADC Poland 2027 |
 
 ## Members

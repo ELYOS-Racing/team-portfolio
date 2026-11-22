@@ -20,12 +20,20 @@ from pathlib import Path
 import markdown
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import diagrams  # noqa: E402  (site/diagrams.py)
+
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 OUT = ROOT / "_site"
 REPO = "https://github.com/ELYOS-Racing/team-portfolio"
 BASE_URL = "https://elyos-racing.github.io/team-portfolio/"
-FONTS = "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap"
+# Archivo for everything; Caveat only for the handwritten notes in the diagrams (its file loads only where used)
+FONTS = ("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900"
+         "&family=Caveat:wght@500..700&display=swap")
+# Runs before first paint and costs nothing: only flags that JS is on, so entrance states apply.
+# (No WebGL probe here any more: creating a GL context in <head> blocked the first paint.)
+HEAD_JS = '<script>document.documentElement.classList.add("js")</script>'
 THREE = "https://unpkg.com/three@0.170.0"
 IMPORTMAP = (f'<script type="importmap">{{"imports":{{"three":"{THREE}/build/three.module.js",'
              f'"three/addons/":"{THREE}/examples/jsm/"}}}}</script>')
@@ -36,7 +44,8 @@ esc = html.escape
 
 # ------------------------------------------------------------------ layout
 
-def page(title: str, body: str, depth: int, description: str = "", current: str = "", hero3d: bool = False) -> str:
+def page(title: str, body: str, depth: int, description: str = "", current: str = "", car3d: bool = False,
+         rail: list[tuple[str, str]] | None = None) -> str:
     up = "../" * depth
     full_title = f"{title} | Elyos Racing Team" if title else "Elyos Racing Team"
     desc = esc(description or "Elyos Racing Team: ultra-efficient electric prototypes for the Shell Eco-marathon, "
@@ -44,6 +53,11 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
     def nav(href: str, label: str, key: str) -> str:
         cur = ' aria-current="page"' if key == current else ""
         return f'<a href="{up}{href}"{cur}>{label}</a>'
+    rail_html = ""
+    if rail:  # chapter index in the left margin of wide screens
+        items = "".join(f'<li><a href="#{i}"><span class="n">{n:02d}</span><span class="t">{esc(t)}</span></a></li>'
+                        for n, (i, t) in enumerate(rail, 1))
+        rail_html = f'<nav class="rail" aria-label="On this page"><ol>{items}</ol></nav>'
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -56,31 +70,36 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 <meta property="og:image" content="{BASE_URL}assets/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#08202f">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#071c29">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="{up}assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{FONTS}">
 <link rel="stylesheet" href="{up}style.css">
-<script>document.documentElement.classList.add("js")</script>
-{IMPORTMAP if hero3d else ""}
+{HEAD_JS}
+{IMPORTMAP if car3d else ""}
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <header class="bar">
-<a class="brand" href="{up}index.html"><img src="{up}assets/logo-on-dark.png" alt="Elyos Racing Team" width="132" height="44"></a>
-<nav aria-label="Main">{nav("mileage.html", "Mileage", "mileage")}{nav("adc.html", "Autonomous", "adc")}{nav("members/index.html", "Members", "members")}</nav>
+<div class="bar-in">
+<a class="brand" href="{up or "./"}"><img src="{up}assets/logo-on-dark.png" alt="Elyos Racing Team, home" width="132" height="44"></a>
+<nav aria-label="Main">{nav("projects/", "Engineering", "engineering")}{nav("mileage", "Mileage", "mileage")}{nav("adc", "Autonomous", "adc")}{nav("members/", "Team", "members")}</nav>
+</div>
 </header>
+{rail_html}
 <main id="content" tabindex="-1">
 {body}
 </main>
 <footer>
+<div class="foot-in">
+<img src="{up}assets/logo-on-dark.png" alt="" width="108" height="36" loading="lazy">
 <p>Content © 2026 Luis Xavier García Pimentel Ascencio and Elyos Racing Team, <a href="{REPO}/blob/main/LICENSE.md">PolyForm Strict 1.0.0</a>. Member pages belong to each member. <a href="{REPO}">Source on GitHub</a>.</p>
+</div>
 </footer>
 <script src="{up}site.js" defer></script>
-{f'<script type="module" src="{up}hero3d.js"></script>' if hero3d else ""}
 </body>
 </html>
 """
@@ -91,9 +110,11 @@ def page(title: str, body: str, depth: int, description: str = "", current: str 
 def md_to_html(text: str) -> str:
     out = markdown.markdown(text, extensions=["tables", "sane_lists"])
     out = re.sub(r"<thead>\s*<tr>\s*<th>Field</th>\s*<th>Value</th>\s*</tr>\s*</thead>", "", out)
-    out = re.sub(r'href="(?!https?://)([^"#]+)\.md(#[^"]*)?"', lambda m: f'href="{m.group(1)}.html{m.group(2) or ""}"', out)
-    out = out.replace('href="../LICENSE.html"', f'href="{REPO}/blob/main/LICENSE.md"')
-    out = out.replace('href="TEMPLATE.html"', f'href="{REPO}/blob/main/members/TEMPLATE.md"')
+    # links between Markdown pages become clean URLs (GitHub Pages serves /x from x.html)
+    out = re.sub(r'href="(?!https?://)([^"#]+)\.md(#[^"]*)?"', lambda m: f'href="{m.group(1)}{m.group(2) or ""}"', out)
+    out = out.replace('href="../LICENSE"', f'href="{REPO}/blob/main/LICENSE.md"')
+    out = out.replace('href="TEMPLATE"', f'href="{REPO}/blob/main/members/TEMPLATE.md"')
+    out = out.replace("<table>", '<div class="table-wrap"><table>').replace("</table>", "</table></div>")
     return out
 
 
@@ -118,117 +139,262 @@ def inline_md(s: str) -> str:
     return re.sub(r"^<p>(.*)</p>$", r"\1", out.strip(), flags=re.S)
 
 
-def track_svg(tracks: dict, key: str, label: str, cls: str = "") -> str:
+def track_svg(tracks: dict, key: str, label: str, cls: str = "", live: bool = False) -> str:
+    """Course outline. Stroke widths scale with --u so every course reads the same at its display size.
+    With live=True it also carries the faint base line, the trail and the car used by the circuit animation."""
     t = tracks[key]
+    vb = [float(v) for v in t["viewBox"].split()]
+    u = max(vb[2], vb[3]) / 800  # viewBox units per "design pixel" at a typical display size
     sx, sy = t["start"]
     nx, ny = t["next"]
     ang = math.degrees(math.atan2(ny - sy, nx - sx))
     flag_x, flag_y, start_dot = sx, sy, ""
-    if not t["closed"]:  # open course (ADC): white dot at the start, checkered line at the finish
+    if not t["closed"]:  # open course (ADC): dot at the start, checkered line at the finish
         flag_x, flag_y = t["end"]
-        start_dot = f'<circle class="finish" cx="{sx}" cy="{sy}" r="9"/>'
-    return f"""<svg class="track {cls}" viewBox="{t['viewBox']}" role="img" aria-label="{esc(label)}">
+        start_dot = f'<circle class="origin" cx="{sx}" cy="{sy}" r="{7 * u:.1f}"/>'
+    c = 6 * u  # checker cell
+    white = ' class="w"'
+    cells = "".join(
+        f'<rect{white if (i + j) % 2 else ""} x="{(i - 2) * c:.1f}" y="{(j - 1) * c:.1f}" width="{c:.1f}" height="{c:.1f}"/>'
+        for i in range(4) for j in range(2))
+    live_bits = ""
+    if live:
+        live_bits = (f'<path class="trail" d="{t["d"]}" pathLength="1000"/>'
+                     f'<g class="car" transform="translate({sx} {sy}) rotate({ang:.1f})"><circle class="halo" r="{16 * u:.1f}"/>'
+                     f'<path class="dot" d="M{10 * u:.1f},0 L{-7 * u:.1f},{-7 * u:.1f} L{-3 * u:.1f},0 L{-7 * u:.1f},{7 * u:.1f} Z"/></g>')
+    return f"""<svg class="track {cls}" viewBox="{t['viewBox']}" style="--u:{u:.3f}" role="img" aria-label="{esc(label)}" preserveAspectRatio="xMidYMid meet">
+<path class="lap-base" d="{t['d']}"/>
 <path class="lap" d="{t['d']}" pathLength="1000"/>
-<g class="startline" transform="translate({flag_x} {flag_y}) rotate({ang + 90:.1f})"><rect x="-16" y="-5" width="8" height="5"/><rect x="-8" y="0" width="8" height="5"/><rect x="0" y="-5" width="8" height="5"/><rect x="8" y="0" width="8" height="5"/><rect class="w" x="-16" y="0" width="8" height="5"/><rect class="w" x="-8" y="-5" width="8" height="5"/><rect class="w" x="0" y="0" width="8" height="5"/><rect class="w" x="8" y="-5" width="8" height="5"/></g>
-{start_dot}</svg>"""
+<g class="startline" transform="translate({flag_x} {flag_y}) rotate({ang + 90:.1f})">{cells}</g>
+{start_dot}{live_bits}</svg>"""
 
 
-def hero3d(tracks: dict, key: str, copy_html: str, label: str, alt: str) -> str:
-    """Sticky 3D stage; until WebGL is ready (or without it) the static course outline shows instead."""
-    return f"""<section class="hero3d" data-hero3d data-track="{key}" data-base="" aria-labelledby="hero-title">
-<div class="stage">
-<canvas aria-hidden="true"></canvas>
-<div class="fallback">{track_svg(tracks, key, label, "hero-track")}</div>
-<div class="overlay">{copy_html}<p class="readout" aria-hidden="true"></p></div>
-<button class="motion-toggle" type="button" aria-pressed="false">Pause motion</button>
-<p class="sr-only">{esc(alt)}</p>
+def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, mode: dict) -> str:
+    """The course as the hero: it draws itself, then the car runs it with a live readout.
+    `mode` holds the data-* attributes read by site.js (laps or a single run)."""
+    t = tracks[key]
+    vb = [float(v) for v in t["viewBox"].split()]
+    shape = "wide" if vb[2] / vb[3] > 1.5 else "square"
+    svg = track_svg(tracks, key, label, "hero-svg", live=True)
+    if shape == "wide":  # anchored bottom right, leaving the top-left quarter to the copy
+        svg = svg.replace('preserveAspectRatio="xMidYMid meet"', 'preserveAspectRatio="xMaxYMax meet"')
+    attrs = " ".join(f'data-{k}="{esc(str(v))}"' for k, v in mode.items())
+    status = ('<div class="hud-cell hud-status"><span class="k"><i class="pulse"></i>Status</span>'
+              '<span class="v" data-hud="status">On the grid</span></div>')
+    if mode["mode"] == "laps":
+        hud = status + f"""<div class="hud-cell"><span class="k">Lap</span><span class="v" data-hud="lap">1<small>/{mode['laps']}</small></span></div>
+<div class="hud-cell"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
+<div class="hud-cell"><span class="k">Distance</span><span class="v" data-hud="dist">0.0<small> km</small></span></div>
+<div class="hud-cell hud-meter"><span class="k">Energy left</span><span class="v" data-hud="energy">1,000<small> Wh</small></span><span class="meter"><span data-hud="bar"></span></span></div>"""
+    else:
+        hud = status + f"""
+<div class="hud-cell"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
+<div class="hud-cell hud-meter"><span class="k">Course</span><span class="v" data-hud="dist">0<small> / {t['length_m']:,.0f} m</small></span><span class="meter"><span data-hud="bar"></span></span></div>"""
+    # entrance order: each first-level piece of the copy, then the readout and the toggle
+    n = 0
+    def enter(m: re.Match) -> str:
+        nonlocal n
+        n += 1
+        return f'{m.group(0)} data-enter style="--i:{n - 1}"'
+    copy_html = re.sub(r'<(?:h1|p class="(?:eyebrow|lede|cta)")', enter, copy_html)
+    return f"""<section class="hero hero--{shape}" data-circuit {attrs} aria-labelledby="hero-title">
+<div class="hero-grid">
+<div class="hero-copy">{copy_html}</div>
+<figure class="hero-track">{svg}
+<figcaption class="sr-only">{esc(alt)}</figcaption></figure>
+<div class="hud" aria-hidden="true" data-enter style="--i:{n + 1}">{hud}</div>
+<button class="motion-toggle" type="button" aria-pressed="false" data-enter style="--i:{n + 2}"><span class="ico" aria-hidden="true"></span><span class="lbl">Pause motion</span></button>
 </div>
 </section>"""
 
 
+def eyebrow(text: str) -> str:
+    return f'<p class="eyebrow">{esc(text)}</p>'
+
+
+def stats_band(data: dict) -> str:
+    items = "".join(f'<div class="stat" data-reveal><dt>{esc(label)}</dt>'
+                    f'<dd><span class="num" data-count="{v}">{v}</span>'
+                    f'<span class="unit{" unit--ord" if unit.startswith(("st", "nd", "rd", "th")) else ""}">{esc(unit)}</span></dd></div>'
+                    for v, unit, label in data["stats"])
+    return f'<section class="stats" aria-label="Key numbers"><dl>{items}</dl></section>'
+
+
 def results_list(data: dict, up: str = "") -> str:
-    best = max(r.get("km_per_kwh", 0) for r in data["results"])
-    rows = []
+    """Grouped by circuit: the bars only compare attempts on the same course."""
+    groups: dict[str, list[dict]] = {}
     for r in data["results"]:
-        k = r.get("km_per_kwh")
-        bar = (f'<div class="eff"><span class="fill" style="--w:{100 * k / best:.1f}%"></span>'
-               f'<span class="val">{k} km/kWh</span></div>') if k else ""
-        rows.append(f'<li><a class="year" href="{up}{r["page"].replace(".md", ".html")}">{r["year"]}</a>'
-                    f'<div><p class="event">{esc(r["event"])}</p><p class="result">{esc(r["result"])}</p>{bar}</div></li>')
-    return f'<ol class="results">{"".join(rows)}</ol>'
+        groups.setdefault(r.get("circuit", "Other venues"), []).append(r)
+    out = []
+    for circuit, rows_in in groups.items():
+        best = max((r.get("km_per_kwh") or 0) for r in rows_in) or 1
+        rows = []
+        for r in rows_in:
+            k = r.get("km_per_kwh")
+            bar = (f'<div class="eff"><span class="track-bar"><span class="fill" style="--w:{k / best:.3f}"></span></span>'
+                   f'<span class="val">{k}<small> km/kWh</small></span></div>') if k else \
+                '<div class="eff eff--none"><span class="val">Debut, no score</span></div>'
+            rows.append(f'<li data-reveal><a class="year" href="{up}{r["page"].removesuffix(".md")}" '
+                        f'aria-label="{r["year"]} season: {esc(r["event"])}">{r["year"]}</a>'
+                        f'<div class="res-body"><p class="event">{esc(r["event"])}</p><p class="result">{esc(r["result"])}</p></div>{bar}</li>')
+        note = ("Bars compare attempts on this course only." if circuit != "Other venues"
+                else "Different courses: each bar is relative to its own event.")
+        if circuit == "Other venues":
+            rows = [re.sub(r'style="--w:[0-9.]+"', 'style="--w:1"', x) for x in rows]
+        out.append(f'<div class="res-group"><h3 class="res-circuit">{esc(circuit)}<span>{note}</span></h3>'
+                   f'<ol class="results">{"".join(rows)}</ol></div>')
+    return "".join(out)
 
 
-def project_list(data: dict, keys: list[str], up: str = "") -> str:
-    items = "".join(f'<li><h3><a href="{up}{data["projects"][k]["page"].replace(".md", ".html")}">'
-                    f'{esc(data["projects"][k]["name"])}</a></h3><p>{esc(data["projects"][k]["summary"])}</p></li>'
-                    for k in keys)
-    return f'<ul class="projects">{items}</ul>'
+def project_cards(data: dict, keys: list[str], up: str = "") -> str:
+    """Engineering areas as cards: hand-drawn glyph, discipline, name, one line."""
+    items = []
+    for k in keys:
+        p = data["projects"][k]
+        items.append(f'<li class="card eng" data-reveal>{diagrams.glyph(k)}'
+                     f'<p class="eng-tag">{esc(p.get("discipline", ""))}</p>'
+                     f'<h3><a class="stretch" href="{up}{p["page"].removesuffix(".md")}">{esc(p["name"])}</a></h3>'
+                     f'<p>{esc(p["summary"])}</p><span class="go" aria-hidden="true">See how it works <span class="arrow">→</span></span></li>')
+    return f'<ul class="cards">{"".join(items)}</ul>'
 
 
-def facts(p: dict) -> str:
-    rows = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in p["facts"])
-    return f'<dl class="facts">{rows}</dl><p class="fine">{esc(p["facts_source"])}</p>'
+project_list = project_cards
+
+
+def facts(rows: list, source: str = "") -> str:
+    cells = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in rows)
+    return f'<dl class="facts">{cells}</dl>' + (f'<p class="fine">{esc(source)}</p>' if source else "")
+
+
+def initials(name: str) -> str:
+    parts = [p for p in re.split(r"\s+", name) if p]
+    return (parts[0][0] + (parts[2][0] if len(parts) > 3 else parts[-1][0])).upper() if parts else "?"
 
 
 def members_list(members: list[dict], up: str = "") -> str:
-    if not members:
-        return '<p class="note">No member pages yet.</p>'
-    items = "".join(f'<li><a href="{up}members/{m["slug"]}.html">{esc(m["name"])}</a>'
-                    f'<span class="area">{esc(m["area"])}</span></li>' for m in members)
-    return f'<ul class="members">{items}</ul>'
+    cards = "".join(f'<li class="member" data-reveal><span class="avatar" aria-hidden="true">{esc(initials(m["name"]))}</span>'
+                    f'<span class="who"><a class="stretch" href="{up}members/{m["slug"]}">{esc(m["name"])}</a>'
+                    f'<span class="area">{esc(m["area"])}</span></span></li>' for m in members)
+    join = (f'<li class="member member--join" data-reveal><span class="avatar" aria-hidden="true">+</span>'
+            f'<span class="who"><a class="stretch" href="{REPO}/blob/main/members/TEMPLATE.md">Your page here</a>'
+            f'<span class="area">Team members publish their own page with one pull request</span></span></li>')
+    return f'<ul class="members">{cards}{join}</ul>'
+
+
+def car_section(data: dict) -> str:
+    c = data["car"]
+    return f"""<section id="car" class="band" aria-labelledby="car-title"><div class="block car">
+<div class="car-copy" data-reveal>{eyebrow("The 2026 car")}<h2 id="car-title">{esc(c['title'])}</h2>
+<p class="lede">{esc(c['summary'])}</p>{facts(c['facts'])}</div>
+<div class="viewer" data-car3d data-src="assets/car.glb" data-reveal>
+<canvas aria-hidden="true"></canvas>
+<p class="viewer-status" role="status">The 3D model loads when you get here.</p>
+<p class="viewer-hint" aria-hidden="true">Drag to turn the car</p>
+<p class="sr-only">Interactive 3D model of the 2026 car in x-ray: a translucent shell with its outline in blue, and the
+chassis, steering and wheels visible inside. It turns slowly on its own; drag to turn it.</p>
+</div>
+</div></section>"""
+
+
+def section_head(eyebrow_text: str, title: str, hid: str, extra: str = "") -> str:
+    return f'<header class="block-head" data-reveal>{eyebrow(eyebrow_text)}<h2 id="{hid}">{esc(title)}</h2>{extra}</header>'
+
+
+# figure numbers and titles of the project diagrams, in home-page order
+FIGS = {k: (i, t) for i, (k, t) in enumerate((("mechanics", "Layout and steering"), ("electronics", "Motor-driver board"),
+                                              ("driver", "Field-oriented control"), ("telemetry", "Telemetry data flow"),
+                                              ("strategy", "Pulse and glide"), ("adc", "Autonomy pipeline")), 1)}
 
 
 # ------------------------------------------------------------------ pages
 
 def index(data: dict, tracks: dict, members: list[dict]) -> str:
     h = data["hero"]
-    laps = h["km_per_kwh"] / h["lap_km"]
+    laps = round(h["km_per_kwh"] / h["lap_km"])
     progs = data["programs"]
-    split = "".join(f"""<a class="program" href="{key}.html">
-{track_svg(tracks, p['track'], f"{p['circuit']} course outline", "small")}
-<h3>{esc(p['name'])}</h3><p class="circuit">{esc(p['circuit'])}</p><p>{esc(p['summary'])}</p></a>"""
+    split = "".join(f"""<a class="program" href="{key}" data-reveal>
+<span class="program-track">{track_svg(tracks, p['track'], f"{p['circuit']} course outline", "small")}</span>
+<span class="program-tag">{esc(p['circuit'])}</span>
+<h3>{esc(p['name'])}</h3><p>{esc(p['summary'])}</p><span class="go" aria-hidden="true">Explore <span class="arrow">→</span></span></a>"""
                     for key, p in progs.items())
-    copy = (f'<h1 id="hero-title">One kilowatt-hour, {laps:.0f} laps.</h1>'
-            f'<p class="lede">{h["km_per_kwh"]} km on the energy of a single kilowatt-hour: {laps:.0f} laps of '
-            f'Indianapolis Motor Speedway, {esc(h["event"])}.</p>')
-    body = f"""{hero3d(tracks, progs['mileage']['track'], copy,
-                     "Outline of the Mileage Challenge course at Indianapolis Motor Speedway",
-                     "Animation: a 3D model of our 2026 car, shown in x-ray so the chassis, steering and wheels are "
-                     "visible, parked on the start line at Indianapolis Motor Speedway. The camera turns around the car "
-                     "and then follows it lap after lap. Use the Pause motion button to stop it.")}
-<section class="intro"><p>{esc(data['tagline'])}</p></section>
-<section class="split" aria-label="Competitions">{split}</section>
-<section id="results"><h2>Results</h2>{results_list(data)}
-<p class="note">Best official attempt of each event. Tracks differ between events, so compare within the same circuit.</p></section>
-<section id="members"><h2>Members</h2>{members_list(members)}
-<p class="note">Pages are opt-in: each member publishes their own with a pull request from the <a href="{REPO}/blob/main/members/TEMPLATE.md">template</a>.</p></section>
-<section class="sources"><h2>Sources</h2><ul>{"".join(f'<li><a href="{s["url"]}">{esc(s["label"])}</a></li>' for s in data["sources"])}</ul></section>"""
-    return page("", body, 0, data["tagline"], hero3d=True)
+    copy = ('<p class="eyebrow">Shell Eco-marathon · <span class="long">Tec de Monterrey, Guadalajara</span>'
+            '<span class="short">Tec GDL</span></p>'
+            f'<h1 id="hero-title"><span class="line">One kilowatt-hour,</span> <span class="line accent">{laps} laps.</span></h1>'
+            f'<p class="lede">{h["km_per_kwh"]} km on the energy of a single kilowatt-hour: {laps} laps of '
+            f'Indianapolis Motor Speedway at the {esc(h["event"])}.</p>'
+            f'<p class="cta"><a class="btn btn-primary" href="#engineering">See the engineering</a>'
+            f'<a class="btn btn-ghost" href="#results">Results</a></p>')
+    alt = (f"Animation: the outline of Indianapolis Motor Speedway draws itself and a car marker runs it lap after lap, "
+           f"speeding up as a time-lapse, while a readout counts laps, distance and the energy left of one "
+           f"kilowatt-hour, down to zero after {laps} laps and {h['km_per_kwh']} km. Use the Pause motion button to stop it.")
+    mode = {"mode": "laps", "laps": laps, "length-m": tracks[progs['mileage']['track']]["length_m"],
+            "total-km": h["km_per_kwh"], "vmax": 32, "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
+    body = f"""{circuit_hero(tracks, progs['mileage']['track'], copy,
+                     "Outline of the Mileage Challenge course at Indianapolis Motor Speedway", alt, mode)}
+{stats_band(data)}
+<section id="about" class="block intro" aria-labelledby="intro-title">
+{section_head("Who we are", "A student team chasing every watt.", "intro-title", f'<p class="lede">{esc(data["tagline"])}</p>')}
+<div class="split">{split}</div>
+</section>
+<section id="engineering" class="block" aria-labelledby="eng-title">
+{section_head("Engineering", "Everything on the car, designed by students.", "eng-title",
+              '<p class="lede">Mechanics, electronics, embedded control, data, simulation and autonomy. Each page explains '
+              'what we built and why, with a diagram of how it works; the design files and code stay private.</p>')}
+{project_cards(data, list(data["projects"]))}
+</section>
+{car_section(data)}
+<section id="results" class="block" aria-labelledby="results-title">
+{section_head("Results", "Every attempt, on the record.", "results-title")}
+{results_list(data)}
+<p class="note">Best official attempt of each event. Tracks differ between events, so bars compare only within the same circuit.</p>
+</section>
+<section id="members" class="band band--alt" aria-labelledby="members-title"><div class="block">
+{section_head("Team", "The people behind it", "members-title",
+              '<p class="lede">Each member writes their own page, in résumé language, with what they built and measured.</p>')}
+{members_list(members)}
+</div></section>
+<section class="block sources" aria-labelledby="sources-title"><h2 id="sources-title">Sources</h2><ul>{"".join(f'<li><a href="{s["url"]}">{esc(s["label"])}</a></li>' for s in data["sources"])}</ul></section>"""
+    rail = [("content", "Start"), ("about", "Who we are"), ("engineering", "Engineering"), ("car", "The car"),
+            ("results", "Results"), ("members", "Team")]
+    return page("", body, 0, data["tagline"], car3d=True, rail=rail)
 
 
 def program_page(key: str, data: dict, tracks: dict) -> str:
     p = data["programs"][key]
     t = tracks[p["track"]]
-    extra = ""
+    rail = [("content", "Course"), ("facts-title", "Key facts"), ("build-title", "What we build")]
     if key == "mileage":
-        extra = f'<section id="results"><h2>Results</h2>{results_list(data)}</section>'
+        extra = f"""<section id="results" class="block" aria-labelledby="results-title">
+{section_head("Results", "Every attempt, on the record.", "results-title")}{results_list(data)}</section>"""
+        rail.append(("results", "Results"))
+        h = data["hero"]
+        laps = round(h["km_per_kwh"] / h["lap_km"])
+        mode = {"mode": "laps", "laps": laps, "length-m": t["length_m"], "vmax": 32, "total-km": h["km_per_kwh"],
+                "finish": f"{h['km_per_kwh']} km on one kilowatt-hour."}
+        alt = (f"Animation: the outline of {p['circuit']} draws itself and a car marker runs it lap after lap while a "
+               f"readout counts laps, distance and the energy left of one kilowatt-hour. Use the Pause motion button to stop it.")
     else:
         adc_md = (ROOT / "projects" / "adc.md").read_text(encoding="utf-8")
         _, _, rest = split_page(adc_md)
         # drop the first paragraph of adc.md: it repeats the program summary shown in the hero
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
-        extra = f'<section class="doc">{md_to_html(rest)}</section>'
-    copy = (f'<h1 id="hero-title">{esc(p["name"])}</h1><p class="circuit">{esc(p["circuit"])}</p>'
+        fig, ftitle = FIGS["adc"]
+        extra = f"""<section id="kit" class="block" aria-labelledby="kit-title">
+{section_head("The kit", "What goes on the car.", "kit-title")}{diagrams.sheet("adc", fig, ftitle)}
+<div class="doc-body">{md_to_html(rest)}</div></section>"""
+        rail.append(("kit", "The kit"))
+        mode = {"mode": "run", "length-m": t["length_m"], "vmax": 22, "finish": "Finish line, no hands.", "running": "Driving itself"}
+        alt = (f"Animation: the outline of the {p['circuit']} course draws itself and a car marker drives it on its own "
+               f"from the start to the checkered finish line, with a readout of speed and distance. Use the Pause motion button to stop it.")
+    copy = (f'{eyebrow(p["circuit"])}<h1 id="hero-title"><span class="line">{esc(p["name"])}</span></h1>'
             f'<p class="lede">{esc(p["summary"])}</p>')
     course = f"{p['circuit']} course outline, {t['length_m']:,.0f} m"
-    alt = (f"Animation: a 3D model of our 2026 car, shown in x-ray, on the {p['circuit']} course. The camera turns "
-           f"around the car and then follows it to the finish line. Use the Pause motion button to stop it.")
-    body = f"""{hero3d(tracks, p['track'], copy, course, alt)}
-<section class="facts-band"><h2 class="sr-only">Key facts</h2>{facts(p)}</section>
-<section><h2>What we build</h2>{project_list(data, p['projects'])}</section>
+    body = f"""{circuit_hero(tracks, p['track'], copy, course, alt, mode)}
+<section class="block facts-band" aria-labelledby="facts-title"><h2 id="facts-title" class="sr-only">Key facts</h2>{facts(p["facts"], p["facts_source"])}</section>
+<section class="block" aria-labelledby="build-title">{section_head("Engineering", "What we build", "build-title")}{project_cards(data, p['projects'])}</section>
 {extra}
-<p class="fine">Course outline from the official coordinates of the Shell Eco-marathon Data and Telemetry Portal.</p>"""
-    return page(p["name"], body, 0, p["summary"], current=key, hero3d=True)
+<p class="block fine">Course outline from the official coordinates of the Shell Eco-marathon Data and Telemetry Portal.</p>"""
+    return page(p["name"], body, 0, p["summary"], current=key, rail=rail)
 
 
 def member_page(slug: str, text: str) -> tuple[str, dict]:
@@ -242,21 +408,60 @@ def member_page(slug: str, text: str) -> tuple[str, dict]:
             if f.get("LinkedIn") and "optional" not in f["LinkedIn"] else "",
             f'<div><dt>Degree</dt><dd>{inline_md(f["Degree"])}</dd></div>' if f.get("Degree") else ""]
     body = f"""<article class="doc person">
-<header><h1>{esc(title)}</h1><dl class="facts">{"".join(meta)}</dl></header>
-{md_to_html(rest)}
+<header class="doc-head"><span class="avatar avatar--lg" aria-hidden="true">{esc(initials(title))}</span>{eyebrow("Member")}<h1>{esc(title)}</h1></header>
+<div class="doc-grid"><div class="doc-body">{md_to_html(rest)}</div>
+<aside class="doc-aside" aria-label="Profile"><dl class="facts facts--stack">{"".join(meta)}</dl></aside></div>
 </article>"""
     info = {"slug": slug, "name": title, "area": re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", f.get("Area", ""))}
     return page(title, body, 1, f"{title}, {info['area']}, Elyos Racing Team", current="members"), info
 
 
-def doc_page(text: str, current: str = "") -> str:
+def doc_page(text: str, current: str = "", kicker: str = "") -> str:
     title, f, rest = split_page(text)
     meta = "".join(f"<div><dt>{esc(k)}</dt><dd>{inline_md(v)}</dd></div>" for k, v in f.items())
+    aside = f'<aside class="doc-aside" aria-label="Summary"><dl class="facts facts--stack">{meta}</dl></aside>' if meta else ""
     body = f"""<article class="doc">
-<header><h1>{esc(title)}</h1>{f'<dl class="facts">{meta}</dl>' if meta else ""}</header>
-{md_to_html(rest)}
+<header class="doc-head">{eyebrow(kicker) if kicker else ""}<h1>{esc(title)}</h1></header>
+<div class="doc-grid{' doc-grid--aside' if meta else ''}"><div class="doc-body">{md_to_html(rest)}</div>{aside}</div>
 </article>"""
     return page(title, body, 1, current=current)
+
+
+def project_page(key: str, text: str, data: dict) -> str:
+    """Engineering page: intro as the lede, the hand-drawn diagram, the spec table, then the details."""
+    title, _, rest = split_page(text)
+    rest = rest.lstrip("\n")
+    m = re.match(r"([^\n|#][^\n]*)\n", rest)
+    lede = ""
+    if m:
+        lede, rest = m.group(1), rest[m.end():]
+    p = data["projects"].get(key, {})
+    fig, ftitle = FIGS.get(key, (0, title))
+    keys = list(data["projects"])
+    i = keys.index(key) if key in keys else -1
+    nxt = data["projects"][keys[(i + 1) % len(keys)]] if i >= 0 else None
+    pager = (f'<nav class="pager" aria-label="Next area"><a href="{nxt["page"].split("/")[-1].removesuffix(".md")}">'
+             f'<span class="k">Next · {esc(nxt.get("discipline", ""))}</span><span class="t">{esc(nxt["name"])} →</span></a></nav>') if nxt else ""
+    body = f"""<article class="doc project">
+<header class="doc-head">{eyebrow(p.get("discipline", "Engineering"))}<h1>{esc(title)}</h1>
+{f'<p class="lede">{inline_md(lede)}</p>' if lede else ""}</header>
+{diagrams.sheet(key, fig, ftitle)}
+<div class="doc-body">{md_to_html(rest)}</div>
+{pager}
+</article>"""
+    cur = "adc" if key == "adc" else "engineering"
+    return page(title, body, 1, lede and re.sub(r"<[^>]+>", "", inline_md(lede)), current=cur)
+
+
+def engineering_index(data: dict) -> str:
+    body = f"""<article class="doc">
+<header class="doc-head">{eyebrow("Engineering")}<h1>Everything on the car, designed by students.</h1>
+<p class="lede">Six areas, one car. Each page explains what we built, how it works and what we measured, with a
+hand-drawn diagram; the design files and the code stay private.</p></header>
+{project_cards(data, list(data["projects"]), "../")}
+</article>"""
+    return page("Engineering", body, 1, "Mechanics, electronics, embedded control, telemetry, energy strategy and autonomy "
+                "of the Elyos Racing Team prototype.", current="engineering")
 
 
 # ------------------------------------------------------------------ README sync
@@ -292,7 +497,7 @@ def build() -> None:
     OUT.mkdir(exist_ok=True)
     for child in OUT.iterdir():  # empty it in place (a local preview server may hold the folder open)
         shutil.rmtree(child) if child.is_dir() else child.unlink()
-    for f in ("style.css", "site.js", "hero3d.js", "tracks.json"):
+    for f in ("style.css", "site.js", "car3d.js"):
         shutil.copy(SITE / f, OUT / f)
     shutil.copytree(SITE / "assets", OUT / "assets")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
@@ -305,30 +510,52 @@ def build() -> None:
         html_page, info = member_page(md.stem, md.read_text(encoding="utf-8"))
         (OUT / "members" / f"{md.stem}.html").write_text(html_page, encoding="utf-8")
         members.append(info)
-    (OUT / "members" / "index.html").write_text(page("Members", f"""<article class="doc"><header><h1>Members</h1></header>
+    (OUT / "members" / "index.html").write_text(page("Members", f"""<article class="doc"><header class="doc-head"><p class="eyebrow">Team</p><h1>Members</h1></header>
 {members_list(members, "../")}
 <p class="note">Each member publishes their own page with a pull request from the <a href="{REPO}/blob/main/members/TEMPLATE.md">template</a>; that pull request is their consent to make it public.</p>
 </article>""", 1, current="members"), encoding="utf-8")
 
-    for sec, cur in (("seasons", "mileage"), ("projects", "")):
-        (OUT / sec).mkdir()
-        for md in sorted((ROOT / sec).glob("*.md")):
-            key = "adc" if md.stem == "adc" else ("mileage" if sec == "projects" else cur)
-            (OUT / sec / f"{md.stem}.html").write_text(doc_page(md.read_text(encoding="utf-8"), key), encoding="utf-8")
+    (OUT / "seasons").mkdir()
+    for md in sorted((ROOT / "seasons").glob("*.md")):
+        (OUT / "seasons" / f"{md.stem}.html").write_text(
+            doc_page(md.read_text(encoding="utf-8"), "mileage", f"Season {md.stem}"), encoding="utf-8")
+    (OUT / "projects").mkdir()
+    for md in sorted((ROOT / "projects").glob("*.md")):
+        (OUT / "projects" / f"{md.stem}.html").write_text(
+            project_page(md.stem, md.read_text(encoding="utf-8"), data), encoding="utf-8")
+    (OUT / "projects" / "index.html").write_text(engineering_index(data), encoding="utf-8")
 
     for key in data["programs"]:
         (OUT / f"{key}.html").write_text(program_page(key, data, tracks), encoding="utf-8")
     (OUT / "index.html").write_text(index(data, tracks, members), encoding="utf-8")
-    (OUT / "404.html").write_text(page("Off track", """<article class="doc"><header><h1>Off track.</h1></header>
-<p>This page does not exist. Head back to the <a href="/team-portfolio/index.html">start line</a>.</p></article>""", 0),
+    (OUT / "404.html").write_text(page("Off track", """<article class="doc"><header class="doc-head"><p class="eyebrow">404</p><h1>Off track.</h1></header>
+<p>This page does not exist. Head back to the <a href="/team-portfolio/">start line</a>.</p></article>""", 0),
                                   encoding="utf-8")
     print(f"built {OUT}")
+
+
+def serve(port: int) -> None:
+    """Preview _site/ the way GitHub Pages serves it: /x falls back to x.html, /dir/ to dir/index.html."""
+    import functools
+    import http.server
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def translate_path(self, path: str) -> str:
+            local = Path(super().translate_path(path))
+            if not local.exists() and not local.suffix and local.with_suffix(".html").exists():
+                return str(local.with_suffix(".html"))
+            return str(local)
+
+    print(f"serving {OUT} on http://localhost:{port}/")
+    http.server.ThreadingHTTPServer(("", port), functools.partial(Handler, directory=str(OUT))).serve_forever()
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write-readme", action="store_true")
     ap.add_argument("--check-readme", action="store_true")
+    ap.add_argument("--serve", type=int, nargs="?", const=8000, metavar="PORT",
+                    help="build, then preview with clean URLs like GitHub Pages")
     a = ap.parse_args()
     data = yaml.safe_load((SITE / "data.yaml").read_text(encoding="utf-8"))
     if a.write_readme:
@@ -341,6 +568,8 @@ def main() -> None:
         print("README.md in sync")
         return
     build()
+    if a.serve:
+        serve(a.serve)
 
 
 if __name__ == "__main__":
