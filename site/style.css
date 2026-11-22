@@ -1,120 +1,153 @@
-/* Elyos Racing Team portfolio.
-   Palette: concrete paddock floor, slate ink, asphalt grey, green-flag accent, kerb red for the start line only.
-   Type: Archivo; the expanded width (125) carries headlines like livery numbers, normal width for reading. */
+/* Elyos Racing Team portfolio. Brand kit (see site/README.md):
+   navy #0F3854 (logo), deep navy #08202F (hero/header), silver #E4E4E4 (logo), white,
+   signal blue #5E97FF (track and data on dark, bars), checkered black/white only at the finish line.
+   Type: Archivo; width 125 for headlines echoes the extended ELYOS wordmark, width 100 for reading. */
 
 :root {
-  --concrete: #e9edec;
-  --paper: #f6f8f7;
-  --ink: #18242c;
-  --asphalt: #4a5560;
-  --flag: #13784a;
-  --kerb: #b8322a;
-  --rule: #c9d0d0;
-  --measure: 68ch;
+  --navy: #0f3854;
+  --deep: #08202f;
+  --silver: #e4e4e4;
+  --page: #f2f3f4;
+  --white: #ffffff;
+  --signal: #5e97ff;
+  --ink: #08202f;
+  --muted: #4d5d69;
+  --on-dark-muted: #a9b8c4;
+  --measure: 66ch;
+  --gutter: clamp(1.25rem, 5vw, 4rem);
 }
 
 * { box-sizing: border-box; }
+html { background: var(--page); color: var(--ink); }
+body { margin: 0; font-family: "Archivo", system-ui, sans-serif; font-size: 1.0625rem; line-height: 1.55; font-variant-numeric: tabular-nums; }
 
-html { background: var(--concrete); color: var(--ink); }
+a { color: var(--navy); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { color: var(--deep); text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; border-radius: 2px; }
 
-body {
-  margin: 0;
-  font-family: "Archivo", system-ui, sans-serif;
-  font-stretch: 100%;
-  font-size: 1.0625rem;
-  line-height: 1.55;
-}
+h1, h2, h3 { font-stretch: 125%; line-height: 1.06; margin: 0; letter-spacing: -0.01em; }
+h1 { font-weight: 850; font-size: clamp(2.3rem, 6.5vw, 4.8rem); }
+h2 { font-weight: 800; font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 1.25rem; }
+h3 { font-weight: 750; font-size: 1.15rem; }
 
-a { color: var(--flag); text-underline-offset: 0.18em; }
-a:hover { color: var(--ink); }
-a:focus-visible { outline: 3px solid var(--flag); outline-offset: 3px; border-radius: 2px; }
-
-h1, h2, h3 { font-stretch: 125%; line-height: 1.08; margin: 0; }
-h1 { font-weight: 850; font-size: clamp(2.4rem, 7vw, 5rem); letter-spacing: -0.02em; }
-h2 { font-weight: 800; font-size: clamp(1.6rem, 3.2vw, 2.25rem); margin-bottom: 1.25rem; }
-h3 { font-weight: 750; font-size: 1.2rem; }
-
+/* Header: the brand band, same on every page */
 .bar {
-  display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; align-items: baseline; justify-content: space-between;
-  padding: 1.1rem clamp(1.25rem, 5vw, 4rem);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 2rem;
+  padding: 0.85rem var(--gutter); background: var(--deep);
 }
-.bar .home { font-stretch: 125%; font-weight: 800; color: var(--ink); text-decoration: none; }
-.bar nav { display: flex; gap: 1.5rem; }
-.bar nav a { color: var(--asphalt); text-decoration: none; }
-.bar nav a:hover { color: var(--flag); }
+.brand img { display: block; height: 34px; width: auto; }
+.bar nav { display: flex; gap: 1.6rem; }
+.bar nav a { color: var(--on-dark-muted); text-decoration: none; font-weight: 550; }
+.bar nav a:hover, .bar nav a[aria-current="page"] { color: var(--white); }
+.bar nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--signal); }
 
-main { padding: 0 clamp(1.25rem, 5vw, 4rem) 4rem; }
-section { max-width: 72rem; margin: 0 auto; padding: 3.5rem 0 0; }
+main { padding: 0 var(--gutter) 4rem; }
+section { max-width: 72rem; margin: 0 auto; padding-top: 3.5rem; }
 
-/* Hero: the circuit is the one bold element of the page. */
-.hero { padding-top: 2.5rem; }
-.hero h1 { max-width: 14ch; }
-.lede { max-width: var(--measure); font-size: 1.2rem; color: var(--asphalt); margin: 1.25rem 0 0; }
-.who { max-width: var(--measure); margin: 0.5rem 0 0; }
-
-.track { margin: 2.5rem 0 1.5rem; }
-.track svg { display: block; width: 100%; height: auto; max-height: 52vh; overflow: visible; }
-.track .lap {
-  fill: none; stroke: var(--ink); stroke-width: 9; stroke-linejoin: round; stroke-linecap: round;
-  stroke-dasharray: 1000; stroke-dashoffset: 0;
-  animation: lap 2.6s cubic-bezier(.5, 0, .2, 1) both;
+/* Hero: deep navy band continuing the header; the circuit is the one bold element */
+.hero {
+  max-width: none; margin: 0 calc(-1 * var(--gutter)); padding: 3rem var(--gutter) 3.5rem;
+  background: var(--deep); color: var(--white);
 }
-.track .startline { stroke: var(--kerb); stroke-width: 7; }
-.track .arrow { fill: var(--kerb); }
-.track figcaption { color: var(--asphalt); font-size: 0.9rem; margin-top: 0.75rem; }
+.hero > * { max-width: 72rem; margin-left: auto; margin-right: auto; }
+.hero-copy h1 { max-width: 13ch; }
+.hero .lede { color: var(--on-dark-muted); }
+.lede { max-width: var(--measure); font-size: 1.18rem; margin-top: 1.1rem; }
 
+.track { display: block; width: 100%; height: auto; overflow: visible; }
+.track .lap { fill: none; stroke: var(--signal); stroke-width: 7; stroke-linejoin: round; stroke-linecap: round; }
+.track .startline rect { fill: var(--deep); }
+.track .startline rect.w { fill: var(--white); }
+.track .finish { fill: var(--white); stroke: var(--deep); stroke-width: 3; }
+.hero-track { margin-top: 2.25rem; max-height: 46vh; }
+.hero-track .lap { stroke-dasharray: 1000; animation: lap 2.6s cubic-bezier(.5, 0, .2, 1) both; }
 @keyframes lap { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
-@media (prefers-reduced-motion: reduce) { .track .lap { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-track .lap { animation: none; } }
 
-/* Results: a timeline, so years are the markers. */
+.intro p { max-width: var(--measure); font-size: 1.15rem; margin: 0; }
+
+/* The two competitions, side by side */
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.5rem; }
+.program {
+  display: block; padding: 1.5rem; background: var(--white); color: var(--ink); text-decoration: none;
+  border-top: 4px solid var(--navy);
+}
+.program:hover { border-top-color: var(--signal); }
+.program .track { height: 9rem; width: auto; max-width: 100%; margin-bottom: 1.25rem; }
+.program .track .lap { stroke: var(--navy); stroke-width: 9; }
+.program .track .startline rect { fill: var(--ink); }
+.program .track .startline rect.w { fill: var(--silver); }
+.program .track .finish { fill: var(--silver); stroke: var(--ink); }
+.program p { margin: 0.4rem 0 0; color: var(--muted); max-width: 44ch; }
+.circuit { font-weight: 600; color: var(--muted); margin: 0.25rem 0 0; }
+
+/* Program pages */
+.program-hero {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2rem 3rem; align-items: center;
+  max-width: none; margin: 0 calc(-1 * var(--gutter)); padding: 3rem var(--gutter) 3.5rem;
+  background: var(--deep); color: var(--white);
+}
+.program-hero .circuit, .program-hero .lede, .program-hero .fine { color: var(--on-dark-muted); }
+.program-track { max-height: 26rem; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem 2rem; margin: 1.75rem 0 0; padding: 0; }
+.facts div { border-top: 1px solid currentColor; padding-top: 0.5rem; }
+.facts dt { font-size: 0.85rem; opacity: 0.75; }
+.facts dd { margin: 0.15rem 0 0; font-weight: 650; }
+.fine { font-size: 0.82rem; color: var(--muted); margin-top: 1rem; max-width: var(--measure); }
+
+/* Results: a timeline, so the years are the markers */
 .results { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
-.results li {
-  display: grid; grid-template-columns: 7.5rem 1fr; gap: 1rem 2rem;
-  padding: 1.25rem 0; border-bottom: 1px solid var(--rule);
-}
-.results .year {
-  font-stretch: 125%; font-weight: 850; font-size: 2rem; line-height: 1; color: var(--ink); text-decoration: none;
-}
-.results .year:hover { color: var(--flag); }
+.results li { display: grid; grid-template-columns: 7rem 1fr; gap: 0.5rem 2rem; padding: 1.2rem 0; border-bottom: 1px solid var(--silver); }
+.results .year { font-stretch: 125%; font-weight: 850; font-size: 1.9rem; line-height: 1; color: var(--ink); text-decoration: none; }
+.results .year:hover { color: var(--navy); }
 .results p { margin: 0; max-width: var(--measure); }
 .results .event { font-weight: 650; }
-.results .result { color: var(--asphalt); }
-
+.results .result { color: var(--muted); }
 .eff { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.6rem; max-width: 34rem; }
-.eff .fill { flex: 0 0 var(--w); height: 0.55rem; background: var(--flag); border-radius: 1px; }
-.eff .val { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
-.eff.none { display: none; }
+.eff .fill { flex: 0 0 var(--w); height: 0.5rem; background: var(--signal); transform-origin: left; }
+.eff .val { font-weight: 650; white-space: nowrap; }
+.js .eff .fill { transform: scaleX(0); transition: transform 0.9s cubic-bezier(.3, 0, .2, 1); }
+.js .results.seen .eff .fill { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .js .eff .fill { transform: none; transition: none; } }
 
-.note { max-width: var(--measure); color: var(--asphalt); font-size: 0.92rem; margin-top: 1rem; }
+.note { max-width: var(--measure); color: var(--muted); font-size: 0.92rem; margin-top: 1rem; }
 
 .projects { list-style: none; padding: 0; margin: 0; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
-.projects p { margin: 0.5rem 0 0; color: var(--asphalt); }
-.projects h3 a { color: var(--ink); text-decoration-color: var(--flag); text-decoration-thickness: 2px; }
+.projects h3 a { color: var(--ink); text-decoration-color: var(--signal); text-decoration-thickness: 2px; }
+.projects p { margin: 0.5rem 0 0; color: var(--muted); }
 
-.members { list-style: none; padding: 0; margin: 0; }
-.members li { padding: 0.6rem 0; border-bottom: 1px solid var(--rule); }
-.members a { font-weight: 650; }
-.members .area { color: var(--asphalt); margin-left: 0.5rem; }
+.members { list-style: none; padding: 0; margin: 0; border-top: 2px solid var(--ink); }
+.members li { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--silver); }
+.members a { font-weight: 700; }
+.members .area { color: var(--muted); }
 
-.sources ul { padding-left: 1.1rem; }
+.sources { padding-bottom: 1rem; }
+.sources h2 { font-size: 1rem; margin-bottom: 0.4rem; }
+.sources ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.9rem; }
 
 /* Rendered Markdown pages */
 .doc { max-width: 52rem; margin: 0 auto; padding-top: 2.5rem; }
-.doc h1 { font-size: clamp(2rem, 5vw, 3.25rem); margin-bottom: 1.5rem; }
-.doc h2 { font-size: 1.5rem; margin: 2.5rem 0 0.75rem; }
+.doc > header { margin-bottom: 1.5rem; }
+.doc > header .facts { color: var(--ink); }
+.doc h2 { font-size: 1.45rem; margin: 2.4rem 0 0.75rem; }
 .doc p, .doc li { max-width: var(--measure); }
-.doc table { border-collapse: collapse; width: 100%; margin: 1rem 0; background: var(--paper); }
-.doc th, .doc td { text-align: left; vertical-align: top; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule); }
-.doc th { font-weight: 700; border-bottom: 2px solid var(--ink); }
-.doc td:first-child { font-weight: 600; white-space: nowrap; }
 .doc ul { padding-left: 1.2rem; }
 .doc li { margin: 0.35rem 0; }
+.doc table { border-collapse: collapse; width: 100%; margin: 1rem 0; background: var(--white); }
+.doc th, .doc td { text-align: left; vertical-align: top; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--silver); }
+.doc th { font-weight: 700; border-bottom: 2px solid var(--ink); }
+.doc td:first-child { font-weight: 600; }
+section.doc { max-width: 72rem; padding-top: 3rem; }
+section.doc > * { max-width: 52rem; }
 
-footer { padding: 2rem clamp(1.25rem, 5vw, 4rem) 3rem; color: var(--asphalt); font-size: 0.85rem; }
+footer { padding: 2rem var(--gutter) 3rem; background: var(--deep); color: var(--on-dark-muted); font-size: 0.85rem; }
 footer p { max-width: 72rem; margin: 0 auto; }
+footer a { color: var(--white); }
 
-@media (max-width: 640px) {
-  .results li { grid-template-columns: 1fr; gap: 0.4rem; }
-  .results .year { font-size: 1.6rem; }
-  .doc td:first-child { white-space: normal; }
+@media (max-width: 760px) {
+  .program-hero { grid-template-columns: 1fr; }
+  .results li { grid-template-columns: 1fr; gap: 0.3rem; }
+  .results .year { font-size: 1.55rem; }
+  .bar nav { gap: 1.1rem; }
 }

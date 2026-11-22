@@ -1,12 +1,44 @@
-# Home page content. Seasons, projects and members pages are rendered from their Markdown files.
+# Single source for the website and for the results table of README.md
+# (python site/build.py --write-readme rewrites it; CI checks they match).
 team: Elyos Racing Team
 tagline: >-
   Students at Tecnológico de Monterrey, Guadalajara campus, building ultra-efficient electric
-  prototypes for the Shell Eco-marathon since 2021.
+  prototypes for the Shell Eco-marathon since 2021, and since 2026 an autonomy kit for the
+  Autonomous Driving Challenge.
 hero:
   km_per_kwh: 336
   lap_km: 3.8325   # official: 15.33 km in 4 laps (Chapter II US 2026, art. 226)
-  event: Shell Eco-marathon United States 2026, Indianapolis Motor Speedway
+  event: Shell Eco-marathon United States 2026
+
+programs:
+  mileage:
+    name: Mileage Challenge
+    track: ims
+    circuit: Indianapolis Motor Speedway
+    summary: >-
+      Go the farthest on the least energy. Our battery-electric prototype races in the Prototype
+      category, measured in kilometres per kilowatt-hour.
+    facts:
+      - [Attempt, "4 consecutive laps, 15.33 km"]
+      - [Time limit, 35 minutes]
+      - [Lap, "3,833 m, raced clockwise"]
+      - [Score, km/kWh on Shell's joulemeter]
+    facts_source: Shell Eco-marathon United States 2026, Official Rules, Chapter II
+    projects: [driver, telemetry]
+  adc:
+    name: Autonomous Driving Challenge
+    track: silesia
+    circuit: Silesia Ring, Poland
+    summary: >-
+      A removable autonomy kit on a previous Elyos car: it drives the course on its own, with a
+      safety driver on board, as efficiently as it can.
+    facts:
+      - [Attempt, "One run, start to finish line"]
+      - [Course, "1.30 km on the Silesia Ring"]
+      - [Time limit, 8 minutes]
+      - [Our goal, "Demo in April 2027, ADC Poland in June 2027"]
+    facts_source: Shell Eco-marathon Poland 2026, Official Rules, Chapter II
+    projects: [adc]
 
 results:
   - year: 2026
@@ -35,15 +67,18 @@ results:
     page: seasons/2023.md
 
 projects:
-  - name: Motor driver
+  driver:
+    name: Motor driver
     page: projects/driver.md
     summary: Field-oriented control of a BLDC motor on a 600 MHz microcontroller, tuned for the lowest possible loss.
-  - name: Telemetry
+  telemetry:
+    name: Telemetry
     page: projects/telemetry.md
     summary: Sensor fusion, logging and a live link to the pits; a predictive co-pilot is in development.
-  - name: Autonomous Driving Challenge
+  adc:
+    name: Autonomy stack
     page: projects/adc.md
-    summary: A removable autonomy kit with ROS 2, simulation and energy-aware planning, aiming at ADC Poland 2027.
+    summary: ROS 2 estimation, planning and actuation, software-in-the-loop simulation and energy-aware speed profiles.
 
 sources:
   - label: Official results, SEM US 2026
