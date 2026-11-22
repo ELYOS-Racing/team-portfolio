@@ -125,8 +125,8 @@ main { display: block; }
   padding: clamp(2.5rem, 6vw, 4.5rem) var(--gutter) clamp(2rem, 4vw, 3rem);
   min-height: min(calc(100svh - var(--bar-h)), 58rem);
 }
-/* Small screens: copy, course, readout, toggle, stacked. */
-.hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "copy" "track" "hud" "toggle"; align-content: start; }
+/* Small screens: copy, course, readout, stacked. */
+.hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "copy" "track" "hud"; align-content: start; }
 .hero-copy { grid-area: copy; }
 .hero-copy h1 { max-width: 15ch; }
 .hero-copy h1 .line { display: block; }
@@ -139,11 +139,11 @@ main { display: block; }
 
 @media (min-width: 961px) {
   /* Wide courses (Indianapolis): two columns that never overlap: the copy on the left; on the right the
-     course, with the three-row readout and a compact pause button under it. Spacing, headline and course
+     course, with the three-row readout under it (the pause button sits in its status row). Spacing, headline and course
      scale with the window height too, so the whole hero and its frame fit on short laptop screens. */
   .hero--wide .hero-grid {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) auto;
-    grid-template-areas: "copy track track" "copy hud toggle";
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    grid-template-areas: "copy track" "copy hud";
     grid-template-rows: auto auto; column-gap: clamp(1rem, 3vw, 3.5rem); row-gap: clamp(0.75rem, 2svh, 1.25rem);
     align-content: center; padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
   }
@@ -155,12 +155,11 @@ main { display: block; }
   .hero--wide .hero-svg { width: 100%; height: auto; max-height: min(36svh, 22rem); }
   .hero--wide .hud { grid-area: hud; }
   .hero--wide .hud-cell { padding: 0.6rem 0.9rem; }
-  .hero--wide .motion-toggle { grid-area: toggle; align-self: end; justify-self: start; }
 
-  /* Compact courses (Silesia Ring): copy, then the readout with the pause button beside it, on the left;
+  /* Compact courses (Silesia Ring): copy, then the readout (pause button in its status row), on the left;
      the course on the right. Sized by the window height as well, so it fits short laptop screens. */
   .hero--square .hero-grid {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "copy copy track" "hud toggle track";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "copy track" "hud track";
     grid-template-rows: auto auto; align-content: center; column-gap: clamp(1rem, 3vw, 3rem); row-gap: clamp(1rem, 3svh, 1.75rem);
     padding-top: clamp(2.25rem, 6svh, 4rem); padding-bottom: clamp(2.25rem, 6svh, 3.5rem);
   }
@@ -170,7 +169,6 @@ main { display: block; }
   .hero--square .hero-svg { max-height: min(62svh, 36rem); }
   .hero--square .hud { max-width: none; margin-top: 0; }
   .hero--square .hud-cell { padding: 0.65rem 0.85rem; }
-  .hero--square .motion-toggle { grid-area: toggle; align-self: end; justify-self: start; }
 }
 
 /* buttons */
@@ -263,11 +261,13 @@ main { display: block; }
 .hero.is-finished .pulse { background: var(--signal-hi); }
 .hero.is-paused .pulse { background: var(--muted); box-shadow: none; animation: none; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgb(74 222 128 / 0); } 100% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0); } }
-.hud-status { grid-column: 1 / -1; }
+.hud-status { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.hud-status-txt { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.hud-meter { grid-column: span 2; }
 .hero[data-mode="run"] .hud { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
 .hero[data-mode="run"] .hud-meter { grid-column: auto; }
 .motion-toggle {
-  grid-area: toggle; justify-self: start;
+  flex: none;
   display: none; align-items: center; gap: 0.55rem; min-height: 44px; padding: 0 1rem;
   background: rgb(29 60 92 / 0.9); color: var(--text); border: 1px solid var(--line-strong); border-radius: 999px;
   font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease;
@@ -885,7 +885,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
   .hero-grid { padding-top: 2rem; gap: 1.25rem; }
   .cta .btn { flex: 1 1 auto; }
   .hud-cell { padding: 0.7rem 0.85rem; }
-  .motion-toggle { justify-self: stretch; justify-content: center; }
+  .motion-toggle { padding: 0 0.8rem; }
   .stat { padding: 1.4rem 1rem 1.4rem 0; }
   .stat + .stat { padding-left: 1rem; }
   .stat:nth-child(3) { padding-left: 0; }

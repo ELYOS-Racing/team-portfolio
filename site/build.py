@@ -211,14 +211,36 @@ def track_annotations(t: dict, u: float, hand: list, length_m: float | None = No
         ang += 180
     txt(ox + nx * 16 * u, oy + ny * 16 * u + fs * 0.35, "clockwise" if t["closed"] else "run direction", rot=ang)
 
-    # length callout halfway round
-    x, y, tx, ty, nx, ny = at(0.5)
-    nx, ny = side(x, y, nx, ny, 80 * u)
-    ex, ey = x + nx * 70 * u, y + ny * 70 * u
-    sgn = 1 if nx >= 0 else -1
+    # length callout near halfway round, at the first spot where the label and its leader stay clear of the course
+    label = f"{'lap' if t['closed'] else 'course'} {length_m or t['length_m']:,.0f} m"
+    tw = len(label) * fs * 0.62
+    samples = [at(i / 400)[:2] for i in range(401)]
+
+    def clearance(x0, y0, x1, y1):
+        return min(math.hypot(max(x0 - px, 0, px - x1), max(y0 - py, 0, py - y1)) for px, py in samples)
+
+    best = None
+    for f in (0.5, 0.45, 0.55, 0.4, 0.6, 0.35, 0.65, 0.3, 0.7, 0.25, 0.75):
+        x, y, tx, ty, nx0_, ny0_ = at(f)
+        for flip in (1, -1):
+            nx, ny = side(x, y, nx0_, ny0_, 80 * u)
+            nx, ny = nx * flip, ny * flip
+            ex, ey = x + nx * 70 * u, y + ny * 70 * u
+            sgn = (1 if nx >= 0 else -1)
+            x0 = ex + 46 * u if sgn > 0 else ex - 46 * u - tw
+            box = (x0, ey - fs * 0.8, x0 + tw, ey + fs * 0.6)
+            if not (inside(box[0], box[1]) and inside(box[2], box[3])):
+                continue
+            c = min(clearance(*box), clearance(min(ex, ex + sgn * 40 * u), ey - 1, max(ex, ex + sgn * 40 * u), ey + 1))
+            if best is None or c > best[0]:
+                best = (c, x, y, nx, ny, ex, ey, sgn)
+            if c >= 16 * u:
+                break
+        if best and best[0] >= 16 * u:
+            break
+    _, x, y, nx, ny, ex, ey, sgn = best
     line(f"M{x + nx * 10 * u:.1f},{y + ny * 10 * u:.1f} L{ex:.1f},{ey:.1f} L{ex + sgn * 40 * u:.1f},{ey:.1f}")
-    txt(ex + sgn * 46 * u, ey + fs * 0.35, f"{'lap' if t['closed'] else 'course'} {length_m or t['length_m']:,.0f} m",
-        anchor="start" if sgn > 0 else "end")
+    txt(ex + sgn * 46 * u, ey + fs * 0.35, label, anchor="start" if sgn > 0 else "end")
 
     # handwritten notes
     for h in hand:
@@ -299,17 +321,22 @@ def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, m
     if shape == "wide":  # anchored bottom right, leaving the top-left quarter to the copy
         svg = svg.replace('preserveAspectRatio="xMidYMid meet"', 'preserveAspectRatio="xMaxYMax meet"')
     attrs = " ".join(f'data-{k}="{esc(str(v))}"' for k, v in mode.items())
-    status = ('<div class="hud-cell hud-status"><span class="k"><i class="pulse"></i>Status</span>'
-              '<span class="v" data-hud="status">On the grid</span></div>')
+    # the readout is hidden from assistive technology (the figcaption describes it); the pause button,
+    # at the right end of the status row, is not
+    toggle = ('<button class="motion-toggle" type="button" aria-pressed="false"><span class="ico" aria-hidden="true"></span>'
+              '<span class="lbl">Pause motion</span></button>')
+    status = ('<div class="hud-cell hud-status"><div class="hud-status-txt" aria-hidden="true"><span class="k"><i class="pulse"></i>Status</span>'
+              f'<span class="v" data-hud="status">On the grid</span></div>{toggle}</div>')
     if mode["mode"] == "laps":
-        hud = status + f"""<div class="hud-cell"><span class="k">Lap</span><span class="v" data-hud="lap">1<small>/{mode['laps']}</small></span></div>
-<div class="hud-cell"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
-<div class="hud-cell"><span class="k">Distance</span><span class="v" data-hud="dist">0.0<small> km</small></span></div>
-<div class="hud-cell hud-meter"><span class="k">Energy left</span><span class="v" data-hud="energy">1,000<small> Wh</small></span><span class="meter"><span data-hud="bar"></span></span></div>"""
+        hud = status + f"""<div class="hud-cell" aria-hidden="true"><span class="k">Lap</span><span class="v" data-hud="lap">1<small>/{mode['laps']}</small></span></div>
+<div class="hud-cell" aria-hidden="true"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
+<div class="hud-cell" aria-hidden="true"><span class="k">Distance</span><span class="v" data-hud="dist">0.0<small> km</small></span></div>
+<div class="hud-cell hud-meter" aria-hidden="true"><span class="k">Energy left</span><span class="v" data-hud="energy">1,000<small> Wh</small></span><span class="meter"><span data-hud="bar"></span></span></div>
+<div class="hud-cell hud-eff" aria-hidden="true"><span class="k">Efficiency</span><span class="v">{mode['total-km']}<small> km/kWh</small></span></div>"""
     else:
         hud = status + f"""
-<div class="hud-cell"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
-<div class="hud-cell hud-meter"><span class="k">Course</span><span class="v" data-hud="dist">0<small> / {t['length_m']:,.0f} m</small></span><span class="meter"><span data-hud="bar"></span></span></div>"""
+<div class="hud-cell" aria-hidden="true"><span class="k">Speed</span><span class="v" data-hud="speed">0<small> km/h</small></span></div>
+<div class="hud-cell hud-meter" aria-hidden="true"><span class="k">Course</span><span class="v" data-hud="dist">0<small> / {t['length_m']:,.0f} m</small></span><span class="meter"><span data-hud="bar"></span></span></div>"""
     # entrance order: each first-level piece of the copy, then the readout and the toggle
     n = 0
     def enter(m: re.Match) -> str:
@@ -326,8 +353,7 @@ def circuit_hero(tracks: dict, key: str, copy_html: str, label: str, alt: str, m
 <div class="hero-copy">{copy_html}</div>
 <figure class="hero-track">{svg}
 <figcaption class="sr-only">{esc(alt)}</figcaption></figure>
-<div class="hud" aria-hidden="true" data-enter style="--i:{n + 1}">{hud}</div>
-<button class="motion-toggle" type="button" aria-pressed="false" data-enter style="--i:{n + 2}"><span class="ico" aria-hidden="true"></span><span class="lbl">Pause motion</span></button>
+<div class="hud" data-enter style="--i:{n + 1}">{hud}</div>
 </div>
 </section>"""
 
