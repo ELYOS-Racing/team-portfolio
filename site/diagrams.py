@@ -471,7 +471,7 @@ def kit() -> Sheet:
     rows = (("1", "Camera", "stereo, on top · to the computer"), ("2", "LiDAR", "2D scanner at the front · to the computer"),
             ("3", "GPS", "position · to the telemetry board"), ("4", "Compass", "orientation · to the telemetry board"),
             ("5", "Telemetry board", "sensors and logging · UART to the guard"), ("6", "Onboard computer", "all autonomy · CAN to the guard only"),
-            ("7", "Guard board", "limits, e-stop · UART to telemetry, driver, actuators"), ("8", "Motor driver", "our FOC driver, rear hub motor"),
+            ("7", "Guard board", "UART · telemetry, driver, actuators"), ("8", "Motor driver", "our FOC driver, rear hub motor"),
             ("9", "Steering actuator", "UART from the guard · to choose"), ("10", "Brake actuator", "UART from the guard · to choose"),
             ("11", "E-stop", "with the safety driver · to the guard"))
     y0, rh = 432, 22
