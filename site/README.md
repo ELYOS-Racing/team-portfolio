@@ -1,5 +1,8 @@
 # Website
 
+Editing rules and the season workflow: [`CONTRIBUTING.md`](../CONTRIBUTING.md). Visual style: [`STYLE.md`](STYLE.md). Both in Spanish, for the team.
+
+
 Static site published to <https://elyos-racing.github.io/team-portfolio/> by `.github/workflows/pages.yml` on every push to `main`.
 
 ```bash
@@ -41,6 +44,10 @@ The page is a soft blueprint desk (mid blue with a faint white grid) between dee
 ### Member pages: the engineer's data sheet
 
 Each `members/<user>.md` becomes a data sheet: a hand-drawn monogram (first letters of the first two names, or the optional `Initials` field) and identity block (role from the latest season heading, area, seasons, and GitHub and LinkedIn links with icons, also shown on the crew cards), then **Measured results** (optional table: Metric · Before · After · Unit; a row becomes before/after bars with the improvement written by hand, or one big number if Before is empty), **Revision history** (each `## Season YYYY · role` is a revision, REV A, B…), **Bill of skills** (the Skills paragraph as a numbered parts list) and **Worked on** (engineering pages matched from the Area field). The template explains the table.
+
+### Season history
+
+`split_history()` reads the `## History` section of an area page (one `### YYYY · headline` per season, `(in progress)` for the running one) and renders it as a timeline under the diagram; `area_history()` collects every area's entries so each `seasons/<year>.md` page gets a *Work by area* list for that year.
 
 ### Engineering pages and their diagrams
 

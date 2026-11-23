@@ -626,7 +626,8 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         # drop the first paragraph of adc.md: it repeats the program summary shown in the hero
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
         extra = sheet("kit", 3, code, "The kit", "What goes on the car.",
-                      diagrams.sheet("kit", *FIGS["kit"]) + f'<div class="doc-body">{md_to_html(rest)}</div>',
+                      diagrams.sheet("kit", *FIGS["kit"]) + f'<div class="doc-body">{md_to_html(split_history(rest)[0])}</div>'
+                      + history_html(split_history(rest)[1], "hist-adc-kit"),
                       note="bolts on, comes off")
         rail.append(("kit", "The kit"))
         mode = {"mode": "run", "length-m": t["length_m"], "vmax": 22, "finish": "Finish line, no hands.", "running": "Driving itself"}
@@ -767,13 +768,68 @@ def member_page(slug: str, text: str, data: dict, n: int) -> tuple[str, dict]:
     return page(title, body, 1, f"{title}, {area}, Elyos Racing Team", current="members"), info
 
 
-def doc_page(text: str, current: str = "", kicker: str = "", dwg: str = "DOC", no: int = 1) -> str:
+def doc_page(text: str, current: str = "", kicker: str = "", dwg: str = "DOC", no: int = 1, extra: str = "") -> str:
     title, f, rest = split_page(text)
     meta = "".join(f"<div><dt>{esc(k)}</dt><dd>{inline_md(v)}</dd></div>" for k, v in f.items())
     aside = f'<aside class="doc-aside" aria-label="Summary"><dl class="facts facts--stack">{meta}</dl></aside>' if meta else ""
-    inner = f'<div class="doc-grid{" doc-grid--aside" if meta else ""}"><div class="doc-body">{md_to_html(rest)}</div>{aside}</div>'
+    inner = f'<div class="doc-grid{" doc-grid--aside" if meta else ""}"><div class="doc-body">{md_to_html(rest)}</div>{aside}</div>{extra}'
     body = f'<div class="sheet-page">{sheet("doc", no, dwg, kicker, title, inner, h="h1")}</div>'
     return page(title, body, 1, current=current)
+
+
+# ------------------------------------------------------------------ season history of an area page
+# Convention (CONTRIBUTING.md): an area page describes the current state, then "## History" with one
+# "### YYYY · headline" per season, newest first, never deleted. "(in progress)" marks the running season.
+HIST_ENTRY = re.compile(r"^### (\d{4}) · (.+)$", re.M)
+PRIVATE = re.compile(r"\n+((?:The code|Design files|CAD files) (?:is|are) private\.)\s*$")
+
+
+def split_history(md: str) -> tuple[str, list[tuple[int, str, str]], str]:
+    """Body before "## History", the season entries (year, headline, Markdown) and the closing privacy line."""
+    tail = ""
+    m = PRIVATE.search(md)
+    if m:
+        tail, md = m.group(1), md[:m.start()] + "\n"
+    if "\n## History" not in "\n" + md:
+        return md, [], tail
+    body, hist = re.split(r"^## History\s*$", md, maxsplit=1, flags=re.M)
+    parts = HIST_ENTRY.split(hist)
+    entries = [(int(parts[i]), parts[i + 1].strip(), parts[i + 2]) for i in range(1, len(parts), 3)]
+    return body, entries, tail
+
+
+def history_html(entries: list[tuple[int, str, str]], hid: str) -> str:
+    if not entries:
+        return ""
+    items = []
+    for year, head, md in entries:
+        live = head.endswith("(in progress)")
+        head = head.removesuffix("(in progress)").strip()
+        badge = '<span class="hist-live">in progress</span>' if live else ""
+        items.append(f'<li class="hist" data-reveal><p class="hist-year"><b>{year}</b>{badge}</p>'
+                     f'<div class="hist-body"><h3>{esc(head)}</h3>{md_to_html(md)}</div></li>')
+    return (f'<section class="ds-block history" aria-labelledby="{hid}"><h2 class="ds-h" id="{hid}"><span>H</span>Season by season</h2>'
+            f'<ol class="hists">{"".join(items)}</ol></section>')
+
+
+def area_history(data: dict) -> dict[int, list[tuple[str, str, str, str]]]:
+    """Every area's entries grouped by season: year → [(area name, link, headline, Markdown)]."""
+    out: dict[int, list] = {}
+    for k, pr in data["projects"].items():
+        md = (ROOT / pr["page"]).read_text(encoding="utf-8")
+        for year, head, body in split_history(split_page(md)[2])[1]:
+            out.setdefault(year, []).append((pr["name"], "../" + pr["page"].removesuffix(".md"), head, body))
+    return out
+
+
+def season_work_html(year: int, hist: dict) -> str:
+    rows = hist.get(year, [])
+    if not rows:
+        return ""
+    items = "".join(f'<li><a href="{href}">{esc(name)}</a><span>{esc(head.removesuffix("(in progress)").strip())}</span></li>'
+                    for name, href, head, _ in rows)
+    return (f'<section class="ds-block" aria-labelledby="work-{year}"><h2 class="ds-h" id="work-{year}"><span>A</span>Work by area</h2>'
+            f'<ul class="season-work">{items}</ul></section>')
 
 
 def project_page(key: str, text: str, data: dict) -> str:
@@ -809,7 +865,9 @@ def project_page(key: str, text: str, data: dict) -> str:
     if i >= 0 and len(keys) > 1:
         refs = (f'<nav class="sheet-refs" aria-label="Neighbouring areas">{ref(keys[i - 1], "prev")}'
                 f'{ref(keys[(i + 1) % len(keys)], "next")}</nav>')
-    inner = f'{diagrams.sheet(key, fig, ftitle)}<div class="doc-body">{md_to_html(rest)}</div>{refs}'
+    body_md, entries, private = split_history(rest)
+    inner = (f'{diagrams.sheet(key, fig, ftitle)}<div class="doc-body">{md_to_html(body_md)}</div>'
+             f'{history_html(entries, "hist-" + key)}{f"<p class=fine>{esc(private)}</p>" if private else ""}{refs}')
     body = (f'<div class="sheet-page">{sheet("doc", max(fig, 1), "ENG", p.get("discipline", "Engineering"), title, inner, h="h1", lede=inline_md(lede) if lede else "", tabs=tabs)}</div>')
     cur = "adc" if key == "adc" else "engineering"
     return page(title, body, 1, lede and re.sub(r"<[^>]+>", "", inline_md(lede)), current=cur)
@@ -872,9 +930,11 @@ def build() -> None:
     (OUT / "members" / "index.html").write_text(page("Members", f'<div class="sheet-page">{crew}</div>', 1, current="members"), encoding="utf-8")
 
     (OUT / "seasons").mkdir()
+    hist = area_history(data)
     for md in sorted((ROOT / "seasons").glob("*.md")):
         (OUT / "seasons" / f"{md.stem}.html").write_text(
-            doc_page(md.read_text(encoding="utf-8"), "mileage", f"Season {md.stem} · logbook", "SEA", int(md.stem) % 100), encoding="utf-8")
+            doc_page(md.read_text(encoding="utf-8"), "mileage", f"Season {md.stem} · logbook", "SEA", int(md.stem) % 100,
+                     extra=season_work_html(int(md.stem), hist)), encoding="utf-8")
     (OUT / "projects").mkdir()
     for md in sorted((ROOT / "projects").glob("*.md")):
         (OUT / "projects" / f"{md.stem}.html").write_text(

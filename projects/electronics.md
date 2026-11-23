@@ -11,10 +11,18 @@ The prototype's own circuit boards: the motor driver that turns battery current 
 | Interfaces | Pinouts and connectors between boards are agreed in interface control documents before routing |
 | Migration | The 2026 driver was moved from Altium to KiCad and verified against the original gerbers: zero design-rule errors, schematic and board matching pin for pin (October 2026) |
 
-## Work for 2027
+## History
+
+### 2027 · KiCad, checks on every change and new boards (in progress)
+
+- **Altium to KiCad:** the 2026 motor-driver board moved to KiCad 10 and verified against the original gerbers (October 2026).
 
 - **Telemetry V2 board** in hat format: a dedicated UART to the motor driver, a 6-pin GPS header and the new sensors (DC-bus energy over CAN, wheel speed, RTK GNSS, air speed).
 - **Gateway board** for the autonomy kit: an opto-isolated UART to the motor driver and USB to the onboard computer.
 - **Every milliwatt counts.** Shell's joulemeter measures the electronics too, so each board's consumption is measured and justified: in the team's model, 2 W less of fixed electronics is worth about 3 % more km/kWh.
+
+### 2026 · Motor-driver and telemetry boards in Altium
+
+- The motor-driver board (Teensy 4.1, 48 V three-phase inverter) and the ESP32 telemetry board raced at Indianapolis, both designed in Altium.
 
 Design files are private.

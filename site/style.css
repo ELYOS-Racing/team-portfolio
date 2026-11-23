@@ -830,6 +830,25 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .rev-body li { margin: 0.45rem 0; color: var(--ink-soft); max-width: 70ch; }
 .rev-body li::marker { color: var(--pen); }
 
+/* season-by-season history of an area page, and the work by area on a season page */
+.history { margin-top: 3rem; }
+.hists { list-style: none; margin: 0; padding: 0 0 0 1.25rem; border-left: 2px solid var(--ink); display: grid; gap: 1.75rem; }
+.hist { position: relative; display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.5rem 1.5rem; }
+.hist::before { content: ""; position: absolute; left: calc(-1.25rem - 7px); top: 0.55rem; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--ink); }
+.hist-year { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
+.hist-year b { font-stretch: 125%; font-weight: 850; font-size: 1.6rem; line-height: 1; color: var(--ink); }
+.hist-live { padding: 0.15rem 0.45rem; border: 1.5px solid var(--pen); font: 700 0.6rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--pen); }
+.hist-body h3 { font-size: 1.15rem; margin-bottom: 0.4rem; }
+.hist-body ul { margin: 0; padding-left: 1.1rem; }
+.hist-body li, .hist-body p { color: var(--ink-soft); max-width: 70ch; margin: 0.35rem 0; }
+.hist-body li::marker { color: var(--pen); }
+.season-work { list-style: none; margin: 0; padding: 0; border-top: 1.5px solid var(--ink); }
+.season-work li { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.25rem 1.5rem; padding: 0.7rem 0; border-bottom: 1px dashed rgb(23 50 92 / 0.4); }
+.season-work a { font-weight: 750; }
+.season-work span { color: var(--ink-soft); }
+@media (max-width: 760px) { .hist, .season-work li { grid-template-columns: 1fr; } }
+
 /* bill of skills */
 .bom { width: 100%; border-collapse: collapse; }
 .bom th { text-align: left; padding: 0.55rem 0.9rem; border-bottom: 1.5px solid var(--ink); font: 700 0.64rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--pencil); }

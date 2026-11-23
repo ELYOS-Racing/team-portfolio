@@ -11,4 +11,11 @@ A removable autonomy kit built on the team's newest car, the prototype that race
 | Planning | Energy-optimal speed profiles (dynamic programming and genetic algorithms over a longitudinal vehicle model) |
 | Hardware | Onboard computer, steering and brake actuators, and a gateway board to the team's own FOC motor driver |
 
+## History
+
+### 2027 · Software stack running in simulation (in progress)
+
+- ROS 2 stack (safety, localization, perception, planning, control) running in software-in-the-loop and on both onboard computers; tests on the car's hardware are pending.
+- Digital twin in Gazebo and in NVIDIA Isaac Sim, fed live by the car's one-way telemetry.
+
 The code is private.
