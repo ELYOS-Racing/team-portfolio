@@ -406,8 +406,82 @@ def adc() -> Sheet:
     return s
 
 
+def kit() -> Sheet:
+    """Where the autonomy kit goes on the car: side view with each part marked in its area, item balloons
+    and a parts list saying what each part connects to (adc-stack README). Positions are indicative;
+    parts whose model is still to be chosen are dashed."""
+    s = Sheet("kit", h=596)
+    sc, tx, ty = 1.55, -11.3, -146.6                      # the mechanics side view, enlarged
+
+    def tf(d: str) -> str:
+        return re.sub(r"-?\d+(?:\.\d+)?(?:,| )-?\d+(?:\.\d+)?",
+                      lambda m: "{:.1f},{:.1f}".format(*(float(v) * sc + o for v, o in zip(re.split(r"[ ,]", m.group(0)), (tx, ty)))), d)
+
+    s.note(40, 38, "KIT LAYOUT · SIDE VIEW", size="big")
+    s.note(40, 62, "positions indicative · dashed: model still to choose", size="small")
+    g = 365
+    s.path(f"M40,{g} L920,{g}", cls="d-line d-thin")
+    s.path(" ".join(f"M{x},{g} l-10,12" for x in range(52, 920, 16)), cls="d-line d-hair", wobble=False)
+    for cx in (221.2, 763.7):                              # wheels: visible below the shell, hidden above
+        s.path(f"M{cx + 37.3:.1f},352.5 A62,62 0 0,1 {cx - 37.3:.1f},352.5", wobble=False)
+        s.path(f"M{cx - 37.3:.1f},352.5 A62,62 0 1,1 {cx + 37.3:.1f},352.5", cls="d-line d-thin", dashed=True, wobble=False)
+        s.center(cx, 228, cx, 380)
+    s.path(tf("M60,300 C64,262 110,232 175,222 C230,213 262,212 290,206 C310,176 360,170 395,186 "
+              "C420,196 470,205 520,220 C560,232 582,262 580,292 C578,312 560,320 530,322 L120,322 C84,322 60,314 60,300 Z"),
+           cls="d-line d-thin", wobble=False)
+    s.path(tf("M300,206 C318,186 360,182 388,193"), cls="d-line d-hair", wobble=False)
+    s.circle(540, 176, 15, cls="d-line d-thin")            # the safety driver, under the canopy
+
+    # the parts (small boxes, no text: the balloons and the list name them)
+    s.box(158, 248, 34, 20, "", r=3)                       # 1 camera, front deck
+    s.box(290, 166, 46, 20, "", r=3)                       # 2 LiDAR in its external pod
+    s.path("M314,186 L314,198", cls="d-line d-thin")
+    s.path("M650,163 L650,138 M640,138 L660,138", cls="d-line")          # 3 GPS antenna
+    s.box(462, 292, 26, 18, "", r=3)                       # 4 compass
+    s.box(500, 288, 42, 24, "", r=3)                       # 5 ESP32
+    s.box(572, 280, 64, 34, "", r=4, accent=True)          # 6 Jetson Orin
+    s.box(664, 288, 42, 24, "", r=3)                       # 7 Teensy guard
+    s.circle(763.7, 302.9, 16, accent=True)                # 8 motor driver and hub motor
+    s.path(s._rect(232, 276, 38, 22, 3), cls="d-line d-tbd", dashed=True, wobble=False)     # 9 steering actuator (to choose)
+    s.path(s._rect(318, 300, 38, 22, 3), cls="d-line d-tbd", dashed=True, wobble=False)     # 10 brake actuator (to choose)
+    s.circle(586, 214, 7, accent=True)                     # 11 e-stop, at the driver's hand
+    # signal paths, faint: sensors into the Orin, Orin to the guard, guard to the motor
+    for d_ in ("M192,258 C380,250 520,262 572,290", "M336,176 C470,186 560,230 590,280", "M650,163 C640,220 620,250 610,280",
+               "M488,301 L500,301", "M542,300 L572,300", "M636,300 L664,300", "M706,300 L748,302"):
+        s.path(d_, cls="d-line d-hair", dashed=True, wobble=False)
+
+    for n, (bx, by), tgt in ((1, (110, 150), (172, 250)), (2, (300, 108), (312, 168)), (3, (706, 104), (652, 140)),
+                             (11, (520, 104), (584, 208)), (9, (240, 400), (250, 298)), (10, (330, 400), (336, 322)),
+                             (4, (430, 400), (474, 310)), (5, (520, 400), (520, 312)), (6, (610, 400), (604, 314)),
+                             (7, (700, 400), (684, 312)), (8, (800, 400), (770, 318))):
+        s.balloon(bx, by, n, *tgt)
+
+    # parts list in two blocks
+    rows = (("1", "Camera", "OAK-D S2 stereo · to the Orin"), ("2", "LiDAR", "RPLIDAR S2P, external pod · to the Orin"),
+            ("3", "GPS", "MAX-M10S · through the ESP32"), ("4", "Compass", "BNO055 · through the ESP32"),
+            ("5", "ESP32", "the senses · USB to the Orin"), ("6", "Jetson Orin", "Nano Super, ROS 2: all autonomy on board"),
+            ("7", "Teensy guard", "arming, e-stop, limits · to the driver"), ("8", "Motor driver", "our FOC driver, rear hub motor"),
+            ("9", "Steering actuator", "front wheels · model to choose"), ("10", "Brake actuator", "hydraulic brakes · model to choose"),
+            ("11", "E-stop", "with the safety driver on board"))
+    y0, rh = 432, 22
+    for block, (x0, xa, xb, x3) in enumerate(((40, 80, 196, 470), (490, 530, 666, 920))):
+        part = rows[:6] if block == 0 else rows[6:]
+        body = (("ITEM", "PART", "NOTE"),) + part
+        ylast = y0 + rh * len(body)
+        s.path(f"M{x0},{y0} L{x3},{y0} L{x3},{ylast} L{x0},{ylast} Z", cls="d-line d-thin")
+        s.path(" ".join(f"M{x0},{y0 + rh * i} L{x3},{y0 + rh * i}" for i in range(1, len(body))), cls="d-line d-hair")
+        s.path(f"M{xa},{y0} L{xa},{ylast} M{xb},{y0} L{xb},{ylast}", cls="d-line d-hair")
+        for i, (a, b, c) in enumerate(body):
+            y = y0 + rh * i + 16
+            cls = "d-th" if i == 0 else "d-tab"
+            s.note((x0 + xa) / 2, y, a, anchor="middle", cls=cls)
+            s.note(xa + 8, y, b, cls=cls)
+            s.note(xb + 8, y, c, cls=cls)
+    return s
+
+
 SHEETS = {"driver": driver, "telemetry": telemetry, "electronics": electronics, "mechanics": mechanics,
-          "strategy": strategy, "adc": adc}
+          "strategy": strategy, "adc": adc, "kit": kit}
 
 CAPTIONS = {
     "driver": "Field-oriented control, every 100 µs: currents measured, turned into the rotor's frame, corrected and sent back as PWM.",
@@ -416,6 +490,7 @@ CAPTIONS = {
     "mechanics": "Side and top views with overall dimensions in mm, item balloons and parts list. From above, the trapezoidal steering: the arm lines meet behind the rear wheel, so the inner wheel turns more.",
     "strategy": "Pulse and glide: short pushes with the motor at its efficient point, long glides with it off; and what each improvement is worth.",
     "adc": "The autonomy pipeline, entirely on board, and the one-way telemetry to the cloud and the digital twin.",
+    "kit": "Where the autonomy kit goes on the car: sensors, onboard computer, the guard board to our motor driver, actuators and the e-stop with the safety driver. Positions are indicative.",
 }
 
 

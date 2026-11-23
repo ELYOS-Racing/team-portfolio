@@ -493,6 +493,7 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sketch-svg .d-thin { stroke-width: 1.4; stroke: rgb(23 50 92 / 0.6); }
 .sketch-svg .d-acc { stroke: var(--signal-hi); }
 .sketch-svg .d-dash { stroke-dasharray: 0.012 0.012; }
+.sketch-svg .d-line.d-tbd, .js .sketch .d-line.d-tbd, .js .sketch.is-in .d-line.d-tbd { stroke-dasharray: 0.06 0.045; stroke-dashoffset: 0; }  /* parts still to be chosen */
 .sketch-svg text { font-family: "Caveat", "Segoe Print", "Comic Sans MS", cursive; fill: var(--text); }
 .sketch-svg .d-title { font-size: 27px; font-weight: 700; }
 .sketch-svg .d-sub { font-size: 19px; fill: var(--silver); font-weight: 500; }
@@ -511,15 +512,15 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sketch-svg .d-tab { font-size: 17px; font-weight: 600; fill: var(--silver); }
 .sketch-svg .d-th { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; fill: var(--text); }
 .js .sketch .d-center { opacity: 0; }
-.js .sketch.is-in .d-center { opacity: 1; transition: opacity 0.6s ease; transition-delay: calc(var(--d) * 55ms); }
+.js .sketch.is-in .d-center { opacity: 1; transition: opacity 0.6s ease; transition-delay: min(calc(var(--d) * 55ms), 2400ms); }
 .sketch-svg .d-dot-acc { fill: var(--signal-hi); }
 /* drawing order: lines draw, then their labels appear (each element carries its --d index) */
 .js .sketch .d-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
 .js .sketch .d-dash { stroke-dasharray: 0.012 0.012; stroke-dashoffset: 0; opacity: 0; }
 .js .sketch .d-txt { opacity: 0; }
-.js .sketch.is-in .d-line { stroke-dashoffset: 0; transition: stroke-dashoffset 0.9s var(--ease-in-out); transition-delay: calc(var(--d) * 55ms); }
-.js .sketch.is-in .d-dash { opacity: 1; transition: opacity 0.6s ease; transition-delay: calc(var(--d) * 55ms); }
-.js .sketch.is-in .d-txt { opacity: 1; transition: opacity 0.5s ease; transition-delay: calc(var(--d) * 55ms + 350ms); }
+.js .sketch.is-in .d-line { stroke-dashoffset: 0; transition: stroke-dashoffset 0.9s var(--ease-in-out); transition-delay: min(calc(var(--d) * 55ms), 2400ms); }
+.js .sketch.is-in .d-dash { opacity: 1; transition: opacity 0.6s ease; transition-delay: min(calc(var(--d) * 55ms), 2400ms); }
+.js .sketch.is-in .d-txt { opacity: 1; transition: opacity 0.5s ease; transition-delay: calc(min(calc(var(--d) * 55ms), 2400ms) + 350ms); }
 .js .sketch .d-flow { opacity: 0; transition: opacity 0.6s ease 2.4s; }
 .js .sketch.is-in .d-flow { opacity: 1; }
 /* CAD title block */
