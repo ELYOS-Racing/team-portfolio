@@ -1,6 +1,6 @@
 # Cómo editar el portafolio
 
-Guía para quien agregue o cambie contenido del portafolio. El aspecto visual (colores, tipografía, hojas, diagramas) está en [`site/STYLE.md`](site/STYLE.md); los detalles técnicos del generador, en [`site/README.md`](site/README.md).
+Guía para quien agregue o cambie contenido del portafolio. Si es tu primera vez, empieza por la [guía de entrada](docs/GUIA_DE_ENTRADA.md): cómo se arma el sitio, cómo correrlo y qué archivo editar. El aspecto visual (colores, tipografía, hojas, diagramas) está en [`site/STYLE.md`](site/STYLE.md); los detalles técnicos del generador, en [`site/README.md`](site/README.md).
 
 **Idiomas** (regla 11 de la [gobernanza](https://github.com/ELYOS-Racing/.github/blob/main/GOVERNANCE.md)): el contenido del sitio (`projects/`, `seasons/`, `members/`, `site/data.yaml`) va en **inglés**, porque lo lee gente de fuera. Estas guías, los issues, los PR y los commits van en **español**.
 
