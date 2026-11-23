@@ -33,6 +33,10 @@ Each member has a page in [`members/`](members/) describing their work, season b
 
 The vehicles' code is private. Each member's contributions show on their GitHub profile as *private contributions*; this portfolio explains what is behind them.
 
+## Seasons and history
+
+Each area page describes the current state and keeps a season-by-season history that is never deleted; each season page lists the work of every area that year, and each finished season is frozen with a `season-<year>` tag. Contributors: see [`CONTRIBUTING.md`](CONTRIBUTING.md) (editing, in Spanish) and [`site/STYLE.md`](site/STYLE.md) (visual style).
+
 ## Sources
 
 - [Official results, SEM US 2026, Prototype Battery Electric](http://results.sem-app.com/app/sem_2026_us/P/BE)
