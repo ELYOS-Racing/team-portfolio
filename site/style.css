@@ -322,8 +322,8 @@ main { display: block; }
 .program:hover { transform: translateY(-3px); }
 .program-track { display: flex; align-items: center; justify-content: center; height: 11rem; margin-bottom: 1.5rem; padding: 0.75rem; border-radius: calc(var(--radius) - 2px); background: transparent; }
 .program .track { height: 100%; width: auto; max-width: 100%; }
-.program .track .lap { stroke-width: calc(var(--u) * 5); stroke-dasharray: 1000; stroke-dashoffset: 0; }
-.program .track .lap-base { stroke-width: calc(var(--u) * 16); }
+.program .track .lap { stroke-width: calc(var(--u) * 14); stroke-dasharray: 1000; stroke-dashoffset: 0; }
+.program .track .lap-base { stroke-width: calc(var(--u) * 38); }
 .program:hover .track .lap { animation: redraw 1.4s var(--ease-in-out); }
 @keyframes redraw { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
 .program-tag { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
@@ -660,11 +660,11 @@ footer { margin-top: clamp(4rem, 9vw, 7rem); background: #08202f; }
 .sheet .eng-tag, .sheet .program-tag { font-family: var(--mono); font-size: 0.7rem; color: var(--pen); }
 .sheet .glyph g { stroke: var(--ink); }
 .sheet .glyph .g-acc { stroke: var(--pen); }
-.sheet .program-track { background: rgb(23 50 92 / 0.045); border: 1px dashed rgb(23 50 92 / 0.45); }
-.sheet .track .lap { stroke: var(--ink); stroke-width: calc(var(--u) * 8); }
-.sheet .track .lap-base { stroke: var(--pen); stroke-opacity: 0.28; stroke-width: calc(var(--u) * 24); }
-.sheet .track .origin { fill: var(--pen); stroke: var(--paper); stroke-width: calc(var(--u) * 3.5); }
-.sheet .track .startline { filter: drop-shadow(0 0 1px var(--ink)); }
+.sheet .program-track { background: rgb(23 50 92 / 0.055); border: 1px dashed rgb(23 50 92 / 0.45); }
+.sheet .program .track .lap { stroke: var(--ink); stroke-width: calc(var(--u) * 15); }
+.sheet .program .track .lap-base { stroke: var(--pen); stroke-opacity: 0.34; stroke-width: calc(var(--u) * 40); }
+.sheet .program .track .origin { fill: var(--pen); stroke: var(--paper); stroke-width: calc(var(--u) * 5); r: calc(var(--u) * 11px); }
+.sheet .program .track .startline { filter: drop-shadow(0 0 1.5px var(--ink)); }
 .sheet .card .stretch:focus-visible::after, .sheet .member .stretch:focus-visible::after { outline-color: var(--pen); }
 
 .sheet .facts div { border-top: 1.5px solid var(--ink); }
