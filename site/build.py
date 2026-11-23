@@ -627,7 +627,7 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
         extra = sheet("kit", 3, code, "The kit", "What goes on the car.",
                       diagrams.sheet("kit", *FIGS["kit"]) + f'<div class="doc-body">{md_to_html(rest)}</div>',
-                      note="nothing comes back to the car")
+                      note="bolts on, comes off")
         rail.append(("kit", "The kit"))
         mode = {"mode": "run", "length-m": t["length_m"], "vmax": 22, "finish": "Finish line, no hands.", "running": "Driving itself"}
         alt = (f"Animation: the outline of the {p['circuit']} course draws itself and a car marker drives it on its own "
