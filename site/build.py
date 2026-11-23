@@ -544,7 +544,8 @@ def sheet(sid: str, no: int, dwg: str, kicker: str, title: str, body: str, note:
 # figure numbers and titles of the project diagrams, in home-page order
 FIGS = {k: (i, t) for i, (k, t) in enumerate((("mechanics", "Layout and steering"), ("electronics", "Motor-driver board"),
                                               ("driver", "Field-oriented control"), ("telemetry", "Telemetry data flow"),
-                                              ("strategy", "Pulse and glide"), ("adc", "Autonomy pipeline")), 1)}
+                                              ("strategy", "Pulse and glide"), ("adc", "Autonomy pipeline"),
+                                              ("kit", "Autonomy kit layout")), 1)}
 
 
 # ------------------------------------------------------------------ pages
@@ -624,10 +625,9 @@ def program_page(key: str, data: dict, tracks: dict) -> str:
         _, _, rest = split_page(adc_md)
         # drop the first paragraph of adc.md: it repeats the program summary shown in the hero
         rest = re.sub(r"^[^\n|#][^\n]*\n", "", rest.lstrip("\n"), count=1)
-        fig, ftitle = FIGS["adc"]
         extra = sheet("kit", 3, code, "The kit", "What goes on the car.",
-                      diagrams.sheet("adc", fig, ftitle) + f'<div class="doc-body">{md_to_html(rest)}</div>',
-                      note="nothing comes back to the car")
+                      diagrams.sheet("kit", *FIGS["kit"]) + f'<div class="doc-body">{md_to_html(rest)}</div>',
+                      note="bolts on, comes off")
         rail.append(("kit", "The kit"))
         mode = {"mode": "run", "length-m": t["length_m"], "vmax": 22, "finish": "Finish line, no hands.", "running": "Driving itself"}
         alt = (f"Animation: the outline of the {p['circuit']} course draws itself and a car marker drives it on its own "

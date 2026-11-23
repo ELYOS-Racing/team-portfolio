@@ -406,8 +406,93 @@ def adc() -> Sheet:
     return s
 
 
+def kit() -> Sheet:
+    """Where the autonomy kit goes on the car: side view with each part marked in its area, item balloons
+    and a parts list saying what each part connects to (from the adc-stack README, without models).
+    Positions are indicative; parts still to be chosen are dashed."""
+    s = Sheet("kit", h=596)
+    sc, tx, ty = 1.55, -11.3, -146.6                      # the mechanics side view, enlarged
+
+    def tf(d: str) -> str:
+        return re.sub(r"-?\d+(?:\.\d+)?(?:,| )-?\d+(?:\.\d+)?",
+                      lambda m: "{:.1f},{:.1f}".format(*(float(v) * sc + o for v, o in zip(re.split(r"[ ,]", m.group(0)), (tx, ty)))), d)
+
+    s.note(40, 38, "KIT LAYOUT · SIDE VIEW", size="big")
+    s.note(40, 62, "positions indicative · dashed: still to choose", size="small")
+    g = 365
+    s.path(f"M40,{g} L920,{g}", cls="d-line d-thin")
+    s.path(" ".join(f"M{x},{g} l-10,12" for x in range(52, 920, 16)), cls="d-line d-hair", wobble=False)
+    for cx in (221.2, 763.7):                              # wheels: visible below the shell, hidden above
+        s.path(f"M{cx + 37.3:.1f},352.5 A62,62 0 0,1 {cx - 37.3:.1f},352.5", wobble=False)
+        s.path(f"M{cx - 37.3:.1f},352.5 A62,62 0 1,1 {cx + 37.3:.1f},352.5", cls="d-line d-thin", dashed=True, wobble=False)
+        s.center(cx, 228, cx, 380)
+    s.path(tf("M60,300 C64,262 110,232 175,222 C230,213 262,212 290,206 C310,176 360,170 395,186 "
+              "C420,196 470,205 520,220 C560,232 582,262 580,292 C578,312 560,320 530,322 L120,322 C84,322 60,314 60,300 Z"),
+           cls="d-line d-thin", wobble=False)
+    s.path(tf("M300,206 C318,186 360,182 388,193"), cls="d-line d-hair", wobble=False)
+    s.circle(540, 176, 15, cls="d-line d-thin")            # the safety driver, under the canopy
+
+    # the parts (small boxes, no text: the balloons and the list name them)
+    s.box(290, 166, 46, 20, "", r=3)                       # 1 camera, on top in its pod
+    s.path("M313,186 L313,198", cls="d-line d-thin")
+    s.box(156, 250, 36, 18, "", r=3)                       # 2 LiDAR, at the front
+    s.path("M650,163 L650,138 M640,138 L660,138", cls="d-line")          # 3 GPS antenna
+    s.box(462, 292, 26, 18, "", r=3)                       # 4 compass
+    s.box(500, 288, 42, 24, "", r=3)                       # 5 telemetry board
+    s.box(282, 270, 64, 34, "", r=4, accent=True)          # 6 onboard computer, under the camera
+    s.box(664, 288, 42, 24, "", r=3)                       # 7 guard board
+    s.circle(763.7, 302.9, 16, accent=True)                # 8 motor driver and hub motor
+    s.path(s._rect(205, 300, 38, 22, 3), cls="d-line d-tbd", dashed=True, wobble=False)   # 9 steering actuator (to choose)
+    s.path(s._rect(395, 306, 38, 22, 3), cls="d-line d-tbd", dashed=True, wobble=False)   # 10 brake actuator (to choose)
+    s.circle(586, 214, 7, accent=True)                     # 11 e-stop, at the driver's hand
+    # signal paths, faint: camera and LiDAR into the computer; GPS and compass into the telemetry board;
+    # the e-stop into the guard
+    for d_ in ("M313,198 L313,270", "M192,259 C230,262 258,272 282,282", "M488,301 L500,301",
+               "M650,163 C620,220 560,260 528,288", "M592,219 C628,240 668,262 684,288"):
+        s.path(d_, cls="d-line d-hair", dashed=True, wobble=False)
+    # the computer talks only to the guard (long CAN run along the floor); the guard fans out to the
+    # telemetry board, the motor driver and both actuators
+    s.path("M314,304 L314,340 L685,340 L685,312", accent=True)
+    s.note(600, 334, "CAN", size="small", anchor="middle", accent=True)
+    s.path("M664,296 L542,298", accent=True)                                   # guard → telemetry board
+    s.path("M706,300 L748,302", accent=True)                                   # guard → motor driver
+    s.note(603, 288, "UART", size="small", anchor="middle", accent=True)       # the guard's links are UART
+    s.note(726, 290, "UART", size="small", anchor="middle", accent=True)
+    s.path("M685,340 L685,352 L224,352 L224,322", accent=True, dashed=True)    # guard → steering actuator
+    s.path("M414,352 L414,328", accent=True, dashed=True)                      # guard → brake actuator
+
+    for n, (bx, by), tgt in ((1, (300, 108), (312, 168)), (2, (110, 150), (170, 252)), (3, (706, 104), (652, 140)),
+                             (11, (520, 104), (584, 208)), (9, (220, 404), (224, 322)), (6, (310, 404), (306, 304)),
+                             (10, (410, 404), (414, 328)), (4, (480, 404), (475, 310)), (5, (560, 404), (530, 312)),
+                             (7, (680, 404), (692, 312)), (8, (790, 404), (770, 318))):
+        s.balloon(bx, by, n, *tgt)
+
+    # parts list in two blocks (what goes where, not which model)
+    rows = (("1", "Camera", "stereo, on top · to the computer"), ("2", "LiDAR", "2D scanner at the front · to the computer"),
+            ("3", "GPS", "position · to the telemetry board"), ("4", "Compass", "orientation · to the telemetry board"),
+            ("5", "Telemetry board", "sensors and logging · UART to the guard"), ("6", "Onboard computer", "all autonomy · CAN to the guard only"),
+            ("7", "Guard board", "UART · telemetry, driver, actuators"), ("8", "Motor driver", "our FOC driver, rear hub motor"),
+            ("9", "Steering actuator", "UART from the guard · to choose"), ("10", "Brake actuator", "UART from the guard · to choose"),
+            ("11", "E-stop", "with the safety driver · to the guard"))
+    y0, rh = 432, 22
+    for block, (x0, xa, xb, x3) in enumerate(((40, 80, 196, 470), (490, 530, 666, 920))):
+        part = rows[:6] if block == 0 else rows[6:]
+        body = (("ITEM", "PART", "NOTE"),) + part
+        ylast = y0 + rh * len(body)
+        s.path(f"M{x0},{y0} L{x3},{y0} L{x3},{ylast} L{x0},{ylast} Z", cls="d-line d-thin")
+        s.path(" ".join(f"M{x0},{y0 + rh * i} L{x3},{y0 + rh * i}" for i in range(1, len(body))), cls="d-line d-hair")
+        s.path(f"M{xa},{y0} L{xa},{ylast} M{xb},{y0} L{xb},{ylast}", cls="d-line d-hair")
+        for i, (a, b, c) in enumerate(body):
+            y = y0 + rh * i + 16
+            cls = "d-th" if i == 0 else "d-tab"
+            s.note((x0 + xa) / 2, y, a, anchor="middle", cls=cls)
+            s.note(xa + 8, y, b, cls=cls)
+            s.note(xb + 8, y, c, cls=cls)
+    return s
+
+
 SHEETS = {"driver": driver, "telemetry": telemetry, "electronics": electronics, "mechanics": mechanics,
-          "strategy": strategy, "adc": adc}
+          "strategy": strategy, "adc": adc, "kit": kit}
 
 CAPTIONS = {
     "driver": "Field-oriented control, every 100 µs: currents measured, turned into the rotor's frame, corrected and sent back as PWM.",
@@ -416,6 +501,7 @@ CAPTIONS = {
     "mechanics": "Side and top views with overall dimensions in mm, item balloons and parts list. From above, the trapezoidal steering: the arm lines meet behind the rear wheel, so the inner wheel turns more.",
     "strategy": "Pulse and glide: short pushes with the motor at its efficient point, long glides with it off; and what each improvement is worth.",
     "adc": "The autonomy pipeline, entirely on board, and the one-way telemetry to the cloud and the digital twin.",
+    "kit": "Where the autonomy kit goes on the car. The onboard computer talks only to the guard board at the back, over a long CAN run; the guard links the telemetry board, the motor driver and the actuators over UART, and takes the e-stop. Positions are indicative.",
 }
 
 
