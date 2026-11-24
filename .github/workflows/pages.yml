@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# Un PR que recibe otro push cancela la corrida anterior: solo cuenta la última y no se gastan minutos en vano.
+# En main no se cancela nada: cada merge corre completo.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
