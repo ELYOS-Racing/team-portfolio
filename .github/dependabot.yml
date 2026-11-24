@@ -1,12 +1,11 @@
-# Actualizaciones de dependencias por PR (semanal). Las de seguridad llegan aparte, en cuanto hay alerta.
+# Actualizaciones de dependencias por PR (mensual, como todo lo automático de la org). Las de seguridad llegan aparte, en cuanto hay alerta.
 # Los commits de Dependabot no llevan DCO: el check de autoría exenta a los bots.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
