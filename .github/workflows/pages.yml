@@ -24,6 +24,25 @@ jobs:
         with:
           path: _site
 
+  autoria:
+    # DCO y coautoría de los commits del PR (GOVERNANCE, regla 8)
+    if: github.event_name == 'pull_request'
+    uses: ELYOS-Racing/.github/.github/workflows/autoria.yml@main
+
+  ci-ok:
+    # Único check obligatorio de la rama: pasa si cada job pasó o se saltó.
+    if: always()
+    needs: [build, autoria]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::un job terminó en $r"; exit 1 ;; esac
+          done
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: build
