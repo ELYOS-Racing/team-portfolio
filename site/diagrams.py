@@ -197,7 +197,7 @@ def driver() -> Sheet:
     s.arrow([(505, 200), (505, 112)], "θ", 520, 160)
     s.arrow([(430, 232), (340, 232), (340, 352)], "θ", 352, 222)
     s.note(28, 186, "every 100 µs\n(10 kHz loop)")
-    s.note(28, 262, "PWM-synced sampling:\n68 µs → 5.4 µs", accent=True)
+    s.note(28, 262, "PWM-synced sampling:\n68 µs → 5.4 µs (bench)", accent=True)
     s.note(225, 462, "Id = 0: all the current makes torque, none is wasted on flux")
     return s
 
@@ -380,7 +380,7 @@ def strategy() -> Sheet:
 
 def adc() -> Sheet:
     s = Sheet("adc")
-    s.note(20, 32, "onboard computer · ROS 2 · runs 100 % on the car")
+    s.note(20, 32, "onboard computer · ROS 2 · designed to run 100 % on board (no external process)")
     labels = (("Sensors", "track · pins"), ("Perception", "cones · stop line"), ("Estimation", "where am I"),
               ("Planning", "energy-aware speed"), ("Control", "steer · brake · torque"))
     xs = (20, 205, 390, 575, 780)

@@ -375,10 +375,13 @@ def eyebrow(text: str) -> str:
 
 
 def stats_band(data: dict) -> str:
-    items = "".join(f'<div class="stat" data-reveal><dt>{esc(label)}</dt>'
+    # cada estadística: [valor, unidad, etiqueta] y, opcional, la página que la respalda
+    def dt(label, href):
+        return f'<a href="{esc(href)}">{esc(label)}</a>' if href else esc(label)
+    items = "".join(f'<div class="stat" data-reveal><dt>{dt(label, href[0] if href else None)}</dt>'
                     f'<dd><span class="num" data-count="{v}">{v}</span>'
                     f'<span class="unit{" unit--ord" if unit.startswith(("st", "nd", "rd", "th")) else ""}">{esc(unit)}</span></dd></div>'
-                    for v, unit, label in data["stats"])
+                    for v, unit, label, *href in data["stats"])
     return f'<section class="stats" aria-label="Key numbers"><dl>{items}</dl></section>'
 
 
