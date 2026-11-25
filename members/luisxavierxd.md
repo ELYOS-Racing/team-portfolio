@@ -16,9 +16,9 @@
 | Team repositories with continuous integration | | 13 | |
 | ADC software pipeline (safety, localization, perception, planning, control) running in software-in-the-loop and on both onboard Jetson Orin computers; car hardware tests pending | | Functional | |
 
-## Season 2027 · lead, motor control and Autonomous Driving Challenge
+## Season 2027 · lead, Autonomous Driving Challenge and motor control
 
-- Lead of the motor driver and of the Autonomous Driving Challenge kit; owner of the team's GitHub organization.
+- Lead of the whole Autonomous Driving Challenge division and of the motor-driver firmware; owner of the team's GitHub organization.
 - Implemented PWM-synchronized current sampling in the FOC motor driver (Teensy 4.1): control-loop compute time from ≈ 68 µs to ≈ 5.4 µs and jitter from ≈ 27 µs to ≈ 0.6 µs, measured on the bench.
 - Leading the move to sensorless FOC (in progress): selected the rotor-angle observer (Luenberger with PLL, sliding-mode observer as fallback), specified the motor state machine that starts on Hall sensors and hands over to the observer, and added a start-up mode selector with a rollback path to the Hall-only firmware.
 - Started and built most of the ADC software stack: ROS 2 nodes for estimation, planning and actuation, software-in-the-loop scenarios in Gazebo, a digital twin of the car and track in Gazebo and in NVIDIA Isaac Sim (an OpenUSD scene of the track, generated in CI and driven live by telemetry from the onboard hardware, running in parallel on the bench; not yet mounted on the car), and energy-optimal speed profiles (optimal control with CasADi and genetic algorithms with pymoo) on the official track geometry.
