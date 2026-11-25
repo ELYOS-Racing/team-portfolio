@@ -306,6 +306,8 @@ main { display: block; }
 .stat { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 0.4rem; padding: 2rem 1.5rem 2rem 0; }
 .stat + .stat { padding-left: 1.5rem; border-left: 1px solid var(--line); }
 .stat dt { font-size: 0.9rem; color: var(--muted); max-width: 22ch; }
+.stat dt a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 0.2em; }
+.stat dt a:hover { color: var(--text); }
 .stat dd { margin: 0; display: flex; align-items: baseline; gap: 0.4rem; }
 .stat .num { font-stretch: 125%; font-weight: 850; font-size: clamp(2rem, 4vw, 3rem); line-height: 1; color: var(--text); }
 .stat .unit { font-weight: 700; color: var(--signal-hi); }

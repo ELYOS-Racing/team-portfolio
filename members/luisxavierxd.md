@@ -11,8 +11,8 @@
 
 | Metric | Before | After | Unit |
 |---|---|---|---|
-| FOC control-loop compute time | 68 | 5.4 | µs |
-| FOC control-loop jitter | 27 | 0.6 | µs |
+| FOC control-loop compute time (bench) | 68 | 5.4 | µs |
+| FOC control-loop jitter (bench) | 27 | 0.6 | µs |
 | Team repositories with continuous integration | | 13 | |
 | ADC software pipeline (safety, localization, perception, planning, control) running in software-in-the-loop and on both onboard Jetson Orin computers; car hardware tests pending | | Functional | |
 
@@ -21,8 +21,8 @@
 - Lead of the motor driver and of the Autonomous Driving Challenge kit; owner of the team's GitHub organization.
 - Implemented PWM-synchronized current sampling in the FOC motor driver (Teensy 4.1): control-loop compute time from ≈ 68 µs to ≈ 5.4 µs and jitter from ≈ 27 µs to ≈ 0.6 µs, measured on the bench.
 - Leading the move to sensorless FOC (in progress): selected the rotor-angle observer (Luenberger with PLL, sliding-mode observer as fallback), specified the motor state machine that starts on Hall sensors and hands over to the observer, and added a start-up mode selector with a rollback path to the Hall-only firmware.
-- Started and built most of the ADC software stack: ROS 2 nodes for estimation, planning and actuation, software-in-the-loop scenarios in Gazebo, a digital twin of the car and track in Gazebo and in NVIDIA Isaac Sim (an OpenUSD scene of the track, generated in CI and driven live by the car's telemetry), and energy-optimal speed profiles (optimal control with CasADi and genetic algorithms with pymoo) on the official track geometry.
-- Built an energy-strategy and loss-budget pipeline for the Indianapolis attempt that ranks vehicle improvements (rolling resistance, motor efficiency, aerodynamics, mass, electronics) and sized the 2027 motor.
+- Started and built most of the ADC software stack: ROS 2 nodes for estimation, planning and actuation, software-in-the-loop scenarios in Gazebo, a digital twin of the car and track in Gazebo and in NVIDIA Isaac Sim (an OpenUSD scene of the track, generated in CI and driven live by telemetry from the onboard hardware, running in parallel on the bench; not yet mounted on the car), and energy-optimal speed profiles (optimal control with CasADi and genetic algorithms with pymoo) on the official track geometry.
+- Built an energy-strategy and loss-budget pipeline for the 2027 Indianapolis attempt (6–10 April) that ranks vehicle improvements (rolling resistance, motor efficiency, aerodynamics, mass, electronics) and sized the 2027 motor.
 - Reorganized the team's engineering work on GitHub: 13 repositories with continuous integration (firmware builds, KiCad ERC/DRC, secret scanning), a versioned communication protocol shared by every board, release manifests per competition and project management following PMBOK 8.
 
 ## Skills
