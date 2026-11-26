@@ -328,7 +328,7 @@ def mechanics() -> Sheet:
     x0, x1, x2, x3, y0, rh = 40, 92, 268, 604, 404, 24
     rows = (("ITEM", "PART", "NOTE"), ("1", "Monocoque shell", "closed body over the chassis"),
             ("2", "Steering", "trapezoidal, partial Ackermann"),
-            ("3", "Rear wheel", "hub motor 350 W → ≈ 500 W, chain + clutch"),
+            ("3", "Rear wheel", "hub motor 350 W → geared hub + freewheel"),
             ("4", "Brakes", "hydraulic, on all three wheels"))
     ylast = y0 + rh * len(rows)
     s.path(f"M{x0},{y0} L{x3},{y0} L{x3},{ylast} L{x0},{ylast} Z", cls="d-line d-thin")
@@ -369,7 +369,7 @@ def strategy() -> Sheet:
     s.note(60, 410, "motor power: 150–300 W pulses, zero while gliding", size="small")
     s.path("M60,382 L620,382", cls="d-line d-thin")
     s.note(680, 52, "where the watts go", size="big")
-    rows = (("Motor + driver", "chain + clutch ≈ −20 % energy"), ("Rolling", "−0.001 crr ≈ +10 % km/kWh"),
+    rows = (("Motor + driver", "freewheel ≈ −13 % energy"), ("Rolling", "−0.001 crr ≈ +10 % km/kWh"),
             ("Electronics", "−2 W ≈ +3 %"), ("Aero", "−0.01 m² CdA ≈ +4 %"))
     for i, (t, k) in enumerate(rows):
         y = 80 + 78 * i

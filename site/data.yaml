@@ -95,7 +95,7 @@ projects:
     name: Mechanics
     discipline: Mechanical design
     page: projects/mechanics.md
-    summary: A three-wheeled 30 kg car with partial-Ackermann steering, hydraulic brakes and, for 2027, a chain drive with a clutch.
+    summary: A three-wheeled 30 kg car with partial-Ackermann steering, hydraulic brakes and, for 2027, a geared hub motor with a freewheel.
   electronics:
     name: Electronics
     discipline: Hardware
