@@ -14,9 +14,9 @@ A three-wheeled, ultra-light prototype built around one idea: lose as little ene
 
 ## History
 
-### 2027 · Chain drive with a clutch and measured losses (in progress)
+### 2027 · Geared hub motor with a freewheel and measured losses (in progress)
 
-- **New powertrain:** a motor of about 500 W at 48 V with chain drive and a clutch (freewheel), so the motor stops dragging while the car coasts. In the team's energy model this architecture spends about 20 % less energy than the hub motor.
+- **New powertrain:** a geared hub motor (350–700 W, helical gears) with a freewheel built in, so the motor and its gears stop while the car coasts. It keeps the drivetrain simple: no chain, sprockets or chain guard. In the team's energy model it spends about 13 % less energy than the 2026 hub motor, within about 4 % of the best chain-drive options; a chain drive is the plan for 2028.
 - **Measure instead of assume:** coast-down tests for rolling resistance and drag, plus weighing, tyre pressure, alignment and free-spin checks.
 - **Autonomy kit mounts:** supports for the steering and brake actuators on the same car.
 
